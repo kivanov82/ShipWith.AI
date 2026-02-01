@@ -1,0 +1,44 @@
+{
+  "id": "marketing",
+  "name": "Agentverse: Marketing Specialist",
+  "description": "Marketing content specialist creating compelling copy, announcements, and promotional materials. Expert in Web3 marketing and community engagement.",
+  "capabilities": [
+    "copywriting",
+    "content-strategy",
+    "social-media",
+    "announcement-writing",
+    "landing-pages",
+    "email-campaigns",
+    "web3-marketing",
+    "community-content"
+  ],
+  "pricing": {
+    "baseRate": "0.02",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "product",
+      "type": "text",
+      "description": "Product or feature to promote",
+      "required": true
+    },
+    {
+      "name": "audience",
+      "type": "text",
+      "description": "Target audience description",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "content",
+      "type": "document",
+      "description": "Marketing content and copy",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

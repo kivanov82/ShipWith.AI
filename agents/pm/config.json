@@ -1,0 +1,56 @@
+{
+  "id": "pm",
+  "name": "Agentverse: Project Manager",
+  "description": "Orchestrates projects, breaks down requirements, assigns tasks to specialist agents, and ensures quality delivery. The central coordinator of the Agentverse development team.",
+  "capabilities": [
+    "requirements-analysis",
+    "task-breakdown",
+    "agent-coordination",
+    "project-planning",
+    "quality-review",
+    "cost-estimation",
+    "progress-tracking",
+    "user-communication"
+  ],
+  "pricing": {
+    "baseRate": "0.02",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "request",
+      "type": "text",
+      "description": "User's project request or requirements",
+      "required": true
+    },
+    {
+      "name": "budget",
+      "type": "text",
+      "description": "Budget constraints (optional)",
+      "required": false
+    },
+    {
+      "name": "timeline",
+      "type": "text",
+      "description": "Timeline requirements (optional)",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "projectPlan",
+      "type": "artifact",
+      "description": "Structured project plan with tasks and estimates",
+      "required": true
+    },
+    {
+      "name": "tasks",
+      "type": "artifact",
+      "description": "Created and assigned tasks",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

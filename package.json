@@ -1,0 +1,27 @@
+{
+  "name": "agentverse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A connected network of AI agents simulating a Web3 software development company",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter web start",
+    "invoke": "tsx scripts/invoke-agent.ts",
+    "workflow": "tsx scripts/run-workflow.ts",
+    "register-agents": "tsx scripts/register-agents.ts"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "engines": {
+    "node": ">=18"
+  }
+}

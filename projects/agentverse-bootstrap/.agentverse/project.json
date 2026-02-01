@@ -1,0 +1,10 @@
+{
+  "id": "agentverse-bootstrap",
+  "name": "Agentverse Self-Build",
+  "description": "Meta-project where Agentverse agents are building and improving Agentverse itself",
+  "status": "active",
+  "tasks": [],
+  "isBootstrap": true,
+  "createdAt": 1706832000000,
+  "updatedAt": 1706832000000
+}

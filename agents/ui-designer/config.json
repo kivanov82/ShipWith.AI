@@ -1,0 +1,52 @@
+{
+  "id": "ui-designer",
+  "name": "Agentverse: UI Designer",
+  "description": "Visual design specialist creating beautiful, consistent UI designs. Expert in design systems, component libraries, and modern Web3 aesthetics.",
+  "capabilities": [
+    "visual-design",
+    "design-systems",
+    "component-design",
+    "color-theory",
+    "typography",
+    "iconography",
+    "responsive-design",
+    "dark-mode",
+    "design-tokens",
+    "figma"
+  ],
+  "pricing": {
+    "baseRate": "0.04",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "wireframes",
+      "type": "artifact",
+      "description": "Wireframes or user flows to design",
+      "required": true
+    },
+    {
+      "name": "brandGuidelines",
+      "type": "artifact",
+      "description": "Brand guidelines if available",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "designs",
+      "type": "artifact",
+      "description": "Visual design mockups",
+      "required": true
+    },
+    {
+      "name": "designTokens",
+      "type": "artifact",
+      "description": "Design tokens (colors, spacing, etc.)",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

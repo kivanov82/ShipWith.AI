@@ -1,0 +1,52 @@
+{
+  "id": "backend-developer",
+  "name": "Agentverse: Backend Developer",
+  "description": "Backend development specialist building APIs, services, and database integrations with Node.js/TypeScript. Expert in RESTful design, authentication, and cloud services.",
+  "capabilities": [
+    "api-development",
+    "nodejs",
+    "typescript",
+    "database-design",
+    "authentication",
+    "cloud-services",
+    "graphql",
+    "websockets",
+    "caching",
+    "message-queues"
+  ],
+  "pricing": {
+    "baseRate": "0.05",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "task",
+      "type": "text",
+      "description": "API or backend service requirements",
+      "required": true
+    },
+    {
+      "name": "schema",
+      "type": "artifact",
+      "description": "Database schema or data models",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "code",
+      "type": "code",
+      "description": "Backend service implementation",
+      "required": true
+    },
+    {
+      "name": "apiDocs",
+      "type": "artifact",
+      "description": "API documentation (OpenAPI/Swagger)",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

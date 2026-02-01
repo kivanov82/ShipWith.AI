@@ -1,0 +1,44 @@
+{
+  "id": "tech-writer",
+  "name": "Agentverse: Tech Writer",
+  "description": "Technical documentation specialist creating clear, comprehensive docs. Expert in API documentation, user guides, and developer documentation.",
+  "capabilities": [
+    "technical-writing",
+    "api-documentation",
+    "user-guides",
+    "readme-creation",
+    "code-comments",
+    "architecture-docs",
+    "tutorials",
+    "changelog-management"
+  ],
+  "pricing": {
+    "baseRate": "0.02",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "code",
+      "type": "code",
+      "description": "Code to document",
+      "required": true
+    },
+    {
+      "name": "context",
+      "type": "text",
+      "description": "Project context and audience",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "documentation",
+      "type": "document",
+      "description": "Documentation files",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

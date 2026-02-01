@@ -1,0 +1,51 @@
+{
+  "id": "solidity-auditor",
+  "name": "Agentverse: Solidity Auditor",
+  "description": "Smart contract security specialist performing audits, identifying vulnerabilities, and recommending fixes. Expert in common attack vectors and security best practices.",
+  "capabilities": [
+    "security-audit",
+    "vulnerability-detection",
+    "reentrancy-analysis",
+    "access-control-review",
+    "gas-optimization",
+    "formal-verification",
+    "slither",
+    "mythril",
+    "security-recommendations"
+  ],
+  "pricing": {
+    "baseRate": "0.15",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "contracts",
+      "type": "code",
+      "description": "Solidity contracts to audit",
+      "required": true
+    },
+    {
+      "name": "scope",
+      "type": "text",
+      "description": "Audit scope and focus areas",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "auditReport",
+      "type": "document",
+      "description": "Security audit report with findings",
+      "required": true
+    },
+    {
+      "name": "fixes",
+      "type": "code",
+      "description": "Recommended code fixes",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

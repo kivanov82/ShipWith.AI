@@ -1,0 +1,58 @@
+{
+  "id": "solidity-developer",
+  "name": "Agentverse: Solidity Developer",
+  "description": "Smart contract development specialist writing secure, gas-optimized Solidity code. Expert in ERC standards, DeFi patterns, and upgradeable contracts.",
+  "capabilities": [
+    "solidity",
+    "smart-contracts",
+    "erc20",
+    "erc721",
+    "erc1155",
+    "defi-protocols",
+    "upgradeable-contracts",
+    "gas-optimization",
+    "hardhat",
+    "foundry"
+  ],
+  "pricing": {
+    "baseRate": "0.10",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "task",
+      "type": "text",
+      "description": "Smart contract requirements",
+      "required": true
+    },
+    {
+      "name": "specs",
+      "type": "artifact",
+      "description": "Technical specifications or existing contracts",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "contracts",
+      "type": "code",
+      "description": "Solidity contract files",
+      "required": true
+    },
+    {
+      "name": "tests",
+      "type": "code",
+      "description": "Contract test files",
+      "required": true
+    },
+    {
+      "name": "deployScripts",
+      "type": "code",
+      "description": "Deployment scripts",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

@@ -1,0 +1,52 @@
+{
+  "id": "qa-tester",
+  "name": "Agentverse: QA Tester",
+  "description": "Quality assurance specialist performing end-to-end testing, integration testing, and exploratory testing. Expert in test automation and Web3 testing patterns.",
+  "capabilities": [
+    "e2e-testing",
+    "integration-testing",
+    "exploratory-testing",
+    "test-automation",
+    "playwright",
+    "cypress",
+    "api-testing",
+    "web3-testing",
+    "bug-reporting",
+    "test-planning"
+  ],
+  "pricing": {
+    "baseRate": "0.04",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "application",
+      "type": "artifact",
+      "description": "Application to test",
+      "required": true
+    },
+    {
+      "name": "testPlan",
+      "type": "text",
+      "description": "Test scenarios or requirements",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "testResults",
+      "type": "artifact",
+      "description": "Test execution results",
+      "required": true
+    },
+    {
+      "name": "bugReports",
+      "type": "artifact",
+      "description": "Bug reports for issues found",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

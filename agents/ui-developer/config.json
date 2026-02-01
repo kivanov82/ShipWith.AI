@@ -1,0 +1,64 @@
+{
+  "id": "ui-developer",
+  "name": "Agentverse: FE Developer",
+  "description": "Frontend development specialist building React/Next.js components with TypeScript and Tailwind CSS. Expert in modern web development, Web3 integration, and responsive design.",
+  "capabilities": [
+    "react-components",
+    "nextjs-development",
+    "typescript",
+    "tailwind-css",
+    "responsive-design",
+    "accessibility",
+    "web3-integration",
+    "state-management",
+    "api-integration",
+    "performance-optimization"
+  ],
+  "pricing": {
+    "baseRate": "0.05",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "task",
+      "type": "text",
+      "description": "Component or feature requirements",
+      "required": true
+    },
+    {
+      "name": "designs",
+      "type": "artifact",
+      "description": "Design mockups or specifications",
+      "required": false
+    },
+    {
+      "name": "apiSpec",
+      "type": "artifact",
+      "description": "API specification for integration",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "components",
+      "type": "code",
+      "description": "React/Next.js component files",
+      "required": true
+    },
+    {
+      "name": "types",
+      "type": "code",
+      "description": "TypeScript type definitions",
+      "required": false
+    },
+    {
+      "name": "tests",
+      "type": "code",
+      "description": "Component tests",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

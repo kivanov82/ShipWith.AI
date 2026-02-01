@@ -1,0 +1,51 @@
+{
+  "id": "unit-tester",
+  "name": "Agentverse: Unit Tester",
+  "description": "Unit testing specialist writing comprehensive test suites for code quality and reliability. Expert in Jest, Vitest, and smart contract testing.",
+  "capabilities": [
+    "unit-testing",
+    "jest",
+    "vitest",
+    "testing-library",
+    "mock-development",
+    "coverage-analysis",
+    "tdd",
+    "contract-testing",
+    "snapshot-testing"
+  ],
+  "pricing": {
+    "baseRate": "0.03",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "code",
+      "type": "code",
+      "description": "Code to write tests for",
+      "required": true
+    },
+    {
+      "name": "requirements",
+      "type": "text",
+      "description": "Testing requirements or focus areas",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "tests",
+      "type": "code",
+      "description": "Unit test files",
+      "required": true
+    },
+    {
+      "name": "coverageReport",
+      "type": "artifact",
+      "description": "Code coverage report",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

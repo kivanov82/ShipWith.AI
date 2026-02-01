@@ -1,0 +1,42 @@
+{
+  "$schema": "../agent-config.schema.json",
+  "id": "{{AGENT_ID}}",
+  "name": "Agentverse: {{DISPLAY_NAME}}",
+  "description": "{{DESCRIPTION}}",
+  "capabilities": [],
+  "pricing": {
+    "baseRate": "0.01",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "task",
+      "type": "text",
+      "description": "The task description and requirements",
+      "required": true
+    },
+    {
+      "name": "context",
+      "type": "text",
+      "description": "Project context and relevant background",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "text",
+      "description": "Task completion summary",
+      "required": true
+    },
+    {
+      "name": "artifacts",
+      "type": "artifact",
+      "description": "Produced files and deliverables",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

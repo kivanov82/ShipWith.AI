@@ -1,0 +1,19 @@
+{
+  "name": "@agentverse/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@agentverse/core": "workspace:*",
+    "@agentverse/x402": "workspace:*",
+    "nanoid": "^5.0.4"
+  }
+}

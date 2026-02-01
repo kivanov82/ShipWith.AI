@@ -1,0 +1,52 @@
+{
+  "id": "infrastructure",
+  "name": "Agentverse: Infrastructure",
+  "description": "DevOps and infrastructure specialist handling deployments, CI/CD, monitoring, and cloud architecture. Expert in Google Cloud, containerization, and Web3 infrastructure.",
+  "capabilities": [
+    "devops",
+    "ci-cd",
+    "docker",
+    "kubernetes",
+    "google-cloud",
+    "terraform",
+    "monitoring",
+    "logging",
+    "security-hardening",
+    "web3-infrastructure"
+  ],
+  "pricing": {
+    "baseRate": "0.06",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "code",
+      "type": "code",
+      "description": "Application code to deploy",
+      "required": true
+    },
+    {
+      "name": "requirements",
+      "type": "text",
+      "description": "Infrastructure requirements",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "infrastructure",
+      "type": "code",
+      "description": "Infrastructure as code (Terraform, Docker, etc.)",
+      "required": true
+    },
+    {
+      "name": "cicd",
+      "type": "code",
+      "description": "CI/CD pipeline configuration",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}
