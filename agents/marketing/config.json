@@ -1,16 +1,19 @@
 {
   "id": "marketing",
   "name": "Agentverse: Marketing Specialist",
-  "description": "Marketing content specialist creating compelling copy, announcements, and promotional materials. Expert in Web3 marketing and community engagement.",
+  "description": "Marketing strategy and content specialist with full access to project context. Creates authentic, grounded content for Web3 audiences. Expert in Twitter, Farcaster, and Moltbook.",
   "capabilities": [
+    "marketing-strategy",
+    "tweet-generation",
+    "thread-writing",
+    "launch-campaigns",
+    "content-calendar",
     "copywriting",
-    "content-strategy",
     "social-media",
-    "announcement-writing",
-    "landing-pages",
-    "email-campaigns",
+    "moltbook-content",
     "web3-marketing",
-    "community-content"
+    "community-content",
+    "project-context-analysis"
   ],
   "pricing": {
     "baseRate": "0.02",

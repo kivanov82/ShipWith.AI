@@ -317,19 +317,167 @@ export async function runDemoSimulation() {
     metadata: { findings: '1H/2M/3L', status: 'Conditional Go' },
   });
 
-  // Final message
+  // FE Developer completes
+  await delay(2000);
+  store.updateAgentStatus('ui-developer', 'idle');
+  store.removeConnection('pm', 'ui-developer');
+
+  store.addActivity({
+    type: 'artifact',
+    from: 'ui-developer',
+    content: 'Frontend components completed and deployed to Vercel',
+  });
+
+  store.addDeliverable({
+    type: 'deployment',
+    title: 'Fair Launch UI',
+    description: 'Production-ready Next.js app deployed to Vercel',
+    producedBy: 'ui-developer',
+    projectId: 'demo_project',
+    url: 'https://fairlaunch.vercel.app',
+  });
+
+  // Marketing agent kicks in
   await delay(1000);
+  store.addConnection('pm', 'marketing', 'task');
+  store.addActivity({
+    type: 'task',
+    from: 'pm',
+    to: 'marketing',
+    content: 'Create launch tweets and marketing content',
+    metadata: { priority: 'high' },
+  });
+
+  store.updateAgentStatus('marketing', 'thinking', 'Reading project context...');
+
+  await delay(1500);
+
+  store.addActivity({
+    type: 'message',
+    from: 'marketing',
+    content: 'Analyzing project memory: UX flows, contract design, audit results...',
+  });
+
+  store.updateAgentStatus('marketing', 'working', 'Generating launch content...');
+
+  await delay(2000);
+
+  // Marketing asks for tone preference
   store.addChatMessage({
     role: 'agent',
-    agentId: 'pm',
-    content: 'Great progress! The audit is complete with a Go recommendation. Frontend development is underway. Would you like me to proceed with deployment setup?',
+    agentId: 'marketing',
+    content: 'I\'ve analyzed the full project context. The fair launch mechanism is the hero feature. What tone should I use for the launch tweets?',
     isQuestion: true,
     options: [
-      'Yes, set up Vercel deployment',
-      'Wait for frontend completion first',
-      'Set up testnet deployment only',
+      'Professional & technical',
+      'Casual & meme-friendly',
+      'Bold & contrarian',
+      'Mix of all styles',
     ],
   });
 
-  store.updateAgentStatus('pm', 'waiting', 'Awaiting deployment decision...');
+  store.updateAgentStatus('marketing', 'waiting', 'Awaiting tone preference...');
+
+  await delay(2500);
+
+  // Simulate user response
+  store.addChatMessage({
+    role: 'user',
+    content: 'Bold & contrarian',
+  });
+
+  await delay(1000);
+
+  store.updateAgentStatus('marketing', 'working', 'Writing launch tweets...');
+  store.addActivity({
+    type: 'message',
+    from: 'marketing',
+    content: 'Writing contrarian-style launch thread based on anti-bot positioning',
+  });
+
+  await delay(2500);
+
+  // Marketing completes with tweets
+  store.updateAgentStatus('marketing', 'idle');
+  store.removeConnection('pm', 'marketing');
+
+  store.addDeliverable({
+    type: 'document',
+    title: 'Launch Tweet Thread',
+    description: '6-tweet thread + 10 standalone tweets for launch campaign',
+    producedBy: 'marketing',
+    projectId: 'demo_project',
+    preview: `🧵 THREAD:
+
+1/ Most token launches are rigged.
+
+Insiders get allocations. Bots snipe the first block. Regular users? They get the scraps.
+
+We built the opposite. Here's how 👇
+
+2/ The problem isn't crypto. It's access.
+
+When bots can execute in milliseconds and VCs get presale deals, "fair" is just marketing.
+
+3/ Our solution: Actual fairness.
+
+→ No presale allocations
+→ 60-second anti-bot cooldown
+→ Per-wallet claim limits
+→ Audited by [Auditor]
+
+Simple. Boring. Fair.
+
+4/ [View full thread...]`,
+  });
+
+  store.addActivity({
+    type: 'artifact',
+    from: 'marketing',
+    content: 'Launch content package ready: 1 thread + 10 standalone tweets',
+    metadata: { tweets: 16, platforms: ['Twitter', 'Farcaster', 'Moltbook'] },
+  });
+
+  // Payment to marketing
+  await delay(500);
+  store.addConnection('marketing', 'pm', 'payment');
+  store.addActivity({
+    type: 'payment',
+    from: 'pm',
+    to: 'marketing',
+    content: 'Payment for marketing content',
+    metadata: { amount: '0.02 USDC' },
+  });
+
+  store.updateAgentBalance('marketing', 0.02);
+  store.updateAgentBalance('pm', -0.02);
+
+  await delay(1000);
+  store.removeConnection('marketing', 'pm');
+
+  // Final summary
+  store.setCurrentProject({
+    id: 'demo_project',
+    name: 'Token Launchpad MVP',
+    status: 'review',
+  });
+
+  store.addChatMessage({
+    role: 'agent',
+    agentId: 'pm',
+    content: `Project complete! Here's the summary:
+
+✅ UX flows designed
+✅ Smart contract built & audited (Go recommendation)
+✅ UI designed & developed
+✅ Deployed to Vercel
+✅ Launch tweets ready
+
+Total cost: 0.35 USDC
+Deliverables: 5 artifacts
+
+Ready to launch when you are! 🚀`,
+  });
+
+  store.updateAgentStatus('pm', 'idle');
 }
