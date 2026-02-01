@@ -35,7 +35,7 @@ Agents can be triggered independently or as part of coordinated workflows, with 
 
 ```bash
 # Clone the repository
-git clone https://github.com/kivanov82/agent-verse.git
+git clone https://github.com/kivanov82/Agentverse.git
 cd agent-verse
 
 # Install dependencies
