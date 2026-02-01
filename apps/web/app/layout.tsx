@@ -15,27 +15,29 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className="min-h-screen bg-gray-950 text-gray-100">
         <div className="flex flex-col min-h-screen">
-          <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
+            <div className="px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold text-white">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg shadow-purple-500/20">
                   A
                 </div>
-                <span className="font-semibold text-lg">Agentverse</span>
-                <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">alpha</span>
+                <div>
+                  <span className="font-semibold text-lg">Agentverse</span>
+                  <span className="ml-2 text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">alpha</span>
+                </div>
               </div>
-              <nav className="flex items-center gap-6 text-sm">
-                <a href="/" className="text-gray-300 hover:text-white transition">Dashboard</a>
-                <a href="/projects" className="text-gray-300 hover:text-white transition">Projects</a>
-                <a href="/agents" className="text-gray-300 hover:text-white transition">Agents</a>
+              <nav className="flex items-center gap-1">
+                <a href="/" className="px-4 py-2 text-sm rounded-lg bg-gray-800 text-white">Dashboard</a>
+                <a href="/projects" className="px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">Projects</a>
+                <a href="/agents" className="px-4 py-2 text-sm rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">Agents</a>
               </nav>
             </div>
           </header>
-          <main className="flex-1">
+          <main className="flex-1 overflow-hidden">
             {children}
           </main>
-          <footer className="border-t border-gray-800 py-4 text-center text-sm text-gray-500">
-            Agentverse - Powered by Claude &amp; x402
+          <footer className="border-t border-gray-800 py-2 text-center text-xs text-gray-600 shrink-0">
+            Agentverse - Powered by Claude &amp; x402 on Base
           </footer>
         </div>
       </body>
