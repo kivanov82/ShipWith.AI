@@ -10,6 +10,10 @@ export async function runDemoSimulation() {
   store.clearActivities();
   store.clearChat();
   store.clearConnections();
+  store.resetProjectStats();
+
+  // Start project timer
+  store.startProjectTimer();
 
   // Start project
   store.setCurrentProject({
@@ -19,14 +23,14 @@ export async function runDemoSimulation() {
   });
 
   // PM starts planning
-  store.updateAgentStatus('pm', 'thinking', 'Analyzing requirements...');
+  store.updateAgentStatus('pm', 'thinking', 'Analyzing project requirements...');
   store.addActivity({
     type: 'task',
     from: 'pm',
     content: 'Starting project analysis for Token Launchpad MVP',
   });
 
-  await delay(1500);
+  await delay(3000);
 
   // PM asks a question
   store.addChatMessage({
@@ -44,7 +48,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('pm', 'waiting', 'Waiting for user input...');
 
-  await delay(2000);
+  await delay(4000);
 
   // Simulate user response
   store.addChatMessage({
@@ -52,17 +56,17 @@ export async function runDemoSimulation() {
     content: 'Fair Launch (no presale, equal access)',
   });
 
-  await delay(1000);
+  await delay(2000);
 
   // PM continues
-  store.updateAgentStatus('pm', 'working', 'Creating project plan...');
+  store.updateAgentStatus('pm', 'working', 'Creating project breakdown...');
   store.addActivity({
     type: 'message',
     from: 'pm',
     content: 'User selected Fair Launch mechanism. Proceeding with project breakdown.',
   });
 
-  await delay(1500);
+  await delay(3000);
 
   store.addChatMessage({
     role: 'agent',
@@ -72,6 +76,7 @@ export async function runDemoSimulation() {
 
   // PM assigns tasks
   store.addConnection('pm', 'ux-analyst', 'task');
+  store.incrementInteractionCount();
   store.addActivity({
     type: 'task',
     from: 'pm',
@@ -80,11 +85,12 @@ export async function runDemoSimulation() {
     metadata: { priority: 'high', estimate: '0.04 USDC' },
   });
 
-  store.updateAgentStatus('ux-analyst', 'thinking', 'Reviewing requirements...');
+  store.updateAgentStatus('ux-analyst', 'thinking', 'Reviewing project requirements...');
 
-  await delay(1000);
+  await delay(2000);
 
   store.addConnection('pm', 'solidity-developer', 'task');
+  store.incrementInteractionCount();
   store.addActivity({
     type: 'task',
     from: 'pm',
@@ -95,7 +101,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('solidity-developer', 'thinking', 'Analyzing contract requirements...');
 
-  await delay(1500);
+  await delay(3000);
 
   // Update project status
   store.setCurrentProject({
@@ -107,24 +113,24 @@ export async function runDemoSimulation() {
   store.updateAgentStatus('pm', 'idle');
 
   // UX Analyst works
-  store.updateAgentStatus('ux-analyst', 'working', 'Creating user flows...');
+  store.updateAgentStatus('ux-analyst', 'working', 'Creating user flow diagrams...');
   store.addActivity({
     type: 'message',
     from: 'ux-analyst',
     content: 'Starting user flow design for the fair launch experience',
   });
 
-  await delay(2000);
+  await delay(4000);
 
   // Solidity dev works
-  store.updateAgentStatus('solidity-developer', 'working', 'Writing smart contract...');
+  store.updateAgentStatus('solidity-developer', 'working', 'Writing FairLaunch.sol contract...');
   store.addActivity({
     type: 'message',
     from: 'solidity-developer',
     content: 'Implementing FairLaunch.sol with anti-bot mechanisms',
   });
 
-  await delay(2500);
+  await delay(5000);
 
   // UX completes and gets paid
   store.updateAgentStatus('ux-analyst', 'idle');
@@ -146,9 +152,11 @@ export async function runDemoSimulation() {
     url: 'https://figma.com/demo',
   });
 
-  await delay(500);
+  await delay(1000);
 
   store.addConnection('ux-analyst', 'pm', 'payment');
+  store.incrementInteractionCount();
+  store.addToTotalSpent(0.04);
   store.addActivity({
     type: 'payment',
     from: 'pm',
@@ -160,11 +168,12 @@ export async function runDemoSimulation() {
   store.updateAgentBalance('ux-analyst', 0.04);
   store.updateAgentBalance('pm', -0.04);
 
-  await delay(1000);
+  await delay(2000);
   store.removeConnection('ux-analyst', 'pm');
 
   // UI Designer gets assigned
   store.addConnection('pm', 'ui-designer', 'task');
+  store.incrementInteractionCount();
   store.addActivity({
     type: 'task',
     from: 'pm',
@@ -172,9 +181,9 @@ export async function runDemoSimulation() {
     content: 'Create visual designs based on UX flows',
   });
 
-  store.updateAgentStatus('ui-designer', 'working', 'Designing UI...');
+  store.updateAgentStatus('ui-designer', 'working', 'Designing UI components...');
 
-  await delay(2000);
+  await delay(4000);
 
   // Solidity completes
   store.updateAgentStatus('solidity-developer', 'idle');
@@ -206,8 +215,9 @@ export async function runDemoSimulation() {
   });
 
   // Assign to auditor
-  await delay(1000);
+  await delay(2000);
   store.addConnection('pm', 'solidity-auditor', 'task');
+  store.incrementInteractionCount();
   store.addActivity({
     type: 'task',
     from: 'pm',
@@ -216,12 +226,14 @@ export async function runDemoSimulation() {
     metadata: { priority: 'critical' },
   });
 
-  store.updateAgentStatus('solidity-auditor', 'working', 'Auditing contract...');
+  store.updateAgentStatus('solidity-auditor', 'working', 'Auditing smart contract...');
 
-  await delay(2000);
+  await delay(4000);
 
   // Payment for solidity
   store.addConnection('solidity-developer', 'pm', 'payment');
+  store.incrementInteractionCount();
+  store.addToTotalSpent(0.10);
   store.addActivity({
     type: 'payment',
     from: 'pm',
@@ -233,7 +245,7 @@ export async function runDemoSimulation() {
   store.updateAgentBalance('solidity-developer', 0.10);
   store.updateAgentBalance('pm', -0.10);
 
-  await delay(1000);
+  await delay(2000);
   store.removeConnection('solidity-developer', 'pm');
 
   // Auditor asks question
@@ -251,7 +263,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('solidity-auditor', 'waiting', 'Waiting for guidance...');
 
-  await delay(2000);
+  await delay(4000);
 
   // User responds
   store.addChatMessage({
@@ -259,7 +271,7 @@ export async function runDemoSimulation() {
     content: 'Both - fix and document in report',
   });
 
-  await delay(1000);
+  await delay(2000);
 
   store.updateAgentStatus('solidity-auditor', 'working', 'Preparing audit report...');
 
@@ -282,10 +294,13 @@ export async function runDemoSimulation() {
     url: 'https://figma.com/demo-ui',
   });
 
-  await delay(1500);
+  store.addToTotalSpent(0.06);
+
+  await delay(3000);
 
   // Assign FE developer
   store.addConnection('pm', 'ui-developer', 'task');
+  store.incrementInteractionCount();
   store.addActivity({
     type: 'task',
     from: 'pm',
@@ -295,7 +310,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('ui-developer', 'working', 'Building React components...');
 
-  await delay(2000);
+  await delay(4000);
 
   // Auditor completes
   store.updateAgentStatus('solidity-auditor', 'idle');
@@ -317,8 +332,10 @@ export async function runDemoSimulation() {
     metadata: { findings: '1H/2M/3L', status: 'Conditional Go' },
   });
 
+  store.addToTotalSpent(0.08);
+
   // FE Developer completes
-  await delay(2000);
+  await delay(4000);
   store.updateAgentStatus('ui-developer', 'idle');
   store.removeConnection('pm', 'ui-developer');
 
@@ -337,9 +354,12 @@ export async function runDemoSimulation() {
     url: 'https://fairlaunch.vercel.app',
   });
 
+  store.addToTotalSpent(0.05);
+
   // Marketing agent kicks in
-  await delay(1000);
+  await delay(2000);
   store.addConnection('pm', 'marketing', 'task');
+  store.incrementInteractionCount();
   store.addActivity({
     type: 'task',
     from: 'pm',
@@ -350,7 +370,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('marketing', 'thinking', 'Reading project context...');
 
-  await delay(1500);
+  await delay(3000);
 
   store.addActivity({
     type: 'message',
@@ -360,7 +380,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('marketing', 'working', 'Generating launch content...');
 
-  await delay(2000);
+  await delay(4000);
 
   // Marketing asks for tone preference
   store.addChatMessage({
@@ -378,7 +398,7 @@ export async function runDemoSimulation() {
 
   store.updateAgentStatus('marketing', 'waiting', 'Awaiting tone preference...');
 
-  await delay(2500);
+  await delay(5000);
 
   // Simulate user response
   store.addChatMessage({
@@ -386,16 +406,16 @@ export async function runDemoSimulation() {
     content: 'Bold & contrarian',
   });
 
-  await delay(1000);
+  await delay(2000);
 
-  store.updateAgentStatus('marketing', 'working', 'Writing launch tweets...');
+  store.updateAgentStatus('marketing', 'working', 'Writing launch thread...');
   store.addActivity({
     type: 'message',
     from: 'marketing',
     content: 'Writing contrarian-style launch thread based on anti-bot positioning',
   });
 
-  await delay(2500);
+  await delay(5000);
 
   // Marketing completes with tweets
   store.updateAgentStatus('marketing', 'idle');
@@ -407,13 +427,13 @@ export async function runDemoSimulation() {
     description: '6-tweet thread + 10 standalone tweets for launch campaign',
     producedBy: 'marketing',
     projectId: 'demo_project',
-    preview: `🧵 THREAD:
+    preview: `THREAD:
 
 1/ Most token launches are rigged.
 
 Insiders get allocations. Bots snipe the first block. Regular users? They get the scraps.
 
-We built the opposite. Here's how 👇
+We built the opposite. Here's how...
 
 2/ The problem isn't crypto. It's access.
 
@@ -421,26 +441,24 @@ When bots can execute in milliseconds and VCs get presale deals, "fair" is just 
 
 3/ Our solution: Actual fairness.
 
-→ No presale allocations
-→ 60-second anti-bot cooldown
-→ Per-wallet claim limits
-→ Audited by [Auditor]
-
-Simple. Boring. Fair.
-
-4/ [View full thread...]`,
+- No presale allocations
+- 60-second anti-bot cooldown
+- Per-wallet claim limits
+- Audited by Security Team`,
   });
 
   store.addActivity({
     type: 'artifact',
     from: 'marketing',
     content: 'Launch content package ready: 1 thread + 10 standalone tweets',
-    metadata: { tweets: 16, platforms: ['Twitter', 'Farcaster', 'Moltbook'] },
+    metadata: { tweets: 16, platforms: ['Twitter', 'Farcaster'] },
   });
 
   // Payment to marketing
-  await delay(500);
+  await delay(1000);
   store.addConnection('marketing', 'pm', 'payment');
+  store.incrementInteractionCount();
+  store.addToTotalSpent(0.02);
   store.addActivity({
     type: 'payment',
     from: 'pm',
@@ -452,7 +470,7 @@ Simple. Boring. Fair.
   store.updateAgentBalance('marketing', 0.02);
   store.updateAgentBalance('pm', -0.02);
 
-  await delay(1000);
+  await delay(2000);
   store.removeConnection('marketing', 'pm');
 
   // Final summary
@@ -467,16 +485,13 @@ Simple. Boring. Fair.
     agentId: 'pm',
     content: `Project complete! Here's the summary:
 
-✅ UX flows designed
-✅ Smart contract built & audited (Go recommendation)
-✅ UI designed & developed
-✅ Deployed to Vercel
-✅ Launch tweets ready
+- UX flows designed
+- Smart contract built & audited
+- UI designed & developed
+- Deployed to Vercel
+- Launch tweets ready
 
-Total cost: 0.35 USDC
-Deliverables: 5 artifacts
-
-Ready to launch when you are! 🚀`,
+Ready to launch when you are!`,
   });
 
   store.updateAgentStatus('pm', 'idle');

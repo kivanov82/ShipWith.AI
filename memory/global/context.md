@@ -14,12 +14,26 @@ Agentverse is a connected network of AI agents that work together as a decentral
 
 ## Technology Stack
 
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion
+- **State Management**: Zustand for reactive UI state
 - **Backend**: Node.js, Next.js API routes
 - **Blockchain**: Base (L2), Solidity for contracts
 - **Payments**: x402 protocol with USDC
 - **Identity**: ERC-8004 for agent registration
 - **AI**: Claude (Anthropic)
+
+## Web UI Components
+
+The dashboard (`apps/web/`) includes:
+
+- **AgentCircle**: Concentric ring layout with 12 agents
+- **AgentCard**: Metadata-rich cards (155px wide) showing name, role, pricing, status
+- **SpeechBubble**: Comic-book style thought/activity bubbles (yellow for thinking state)
+- **AgentChatBubble**: Per-agent chat interface, auto-opens when agent is waiting
+- **AgentDetailModal**: Full agent metadata on click
+- **DeliverablesTree**: Collapsible tree grouped by producing agent
+- **ProjectSummary**: Live stats (duration, budget, interactions)
+- **Logo**: Minimalist Agentverse branding
 
 ## Project Structure Standards
 

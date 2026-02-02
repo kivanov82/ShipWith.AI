@@ -21,7 +21,13 @@ Agents can be triggered independently or as part of coordinated workflows, with 
 - **x402 Payments**: USDC payments on Base (testnet/mainnet)
 - **ERC-8004 Identity**: On-chain agent registration on Ethereum
 - **Hybrid Invocation**: CLI for local dev, API for cloud deployment
-- **Next.js Dashboard**: Real-time visualization of agent activity
+- **Interactive Dashboard**: Real-time visualization with:
+  - Concentric circle agent layout with connection animations
+  - Agent cards displaying name, role, pricing, and status
+  - Comic-book style speech bubbles showing agent thoughts/activity
+  - Per-agent chat interface for user prompts
+  - Deliverables tree grouped by agent
+  - Project summary with budget tracking
 
 ## Quick Start
 
@@ -177,11 +183,15 @@ pnpm register-agents --agent solidity-auditor
 - [x] Next.js dashboard skeleton
 - [x] x402 payment integration
 - [x] ERC-8004 registration tooling
+- [x] Interactive agent visualization (concentric circles, speech bubbles)
+- [x] Agent metadata display (name, role, pricing, status)
+- [x] Per-agent chat interface
+- [x] Deliverables tree view
+- [x] Project summary panel with stats
 - [ ] Complete CLAUDE.md for all agents
 - [ ] SSE live event streaming
-- [ ] Real inter-agent task handoff
+- [ ] Real inter-agent task handoff with payments
 - [ ] Google Cloud deployment
-- [ ] Production UI polish
 - [ ] Public API with rate limiting
 
 ## Contributing

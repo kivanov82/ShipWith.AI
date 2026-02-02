@@ -35,7 +35,7 @@ agentverse/
 # Install dependencies
 pnpm install
 
-# Start development server
+# Start development server (web UI at http://localhost:3000)
 pnpm dev
 
 # Invoke an agent directly
@@ -45,6 +45,18 @@ pnpm invoke ui-developer "Build a wallet connect button"
 # Register agents with ERC-8004 (requires ETH)
 pnpm register-agents --dry-run
 ```
+
+## Web UI Features
+
+The Next.js dashboard provides an interactive visualization:
+
+- **Concentric Circle Layout**: Agents arranged in rings (core → development → support)
+- **Agent Cards**: Display name, role, description, pricing, and live status
+- **Speech Bubbles**: Comic-book style bubbles showing agent thoughts/activity
+- **Per-Agent Chat**: Click the chat icon on any agent to send prompts
+- **Deliverables Tree**: Work products grouped by producing agent
+- **Project Summary**: Time elapsed, budget spent, and interaction counts
+- **Demo Mode**: Click "Run Demo" to see a simulated multi-agent workflow
 
 ## Key Concepts
 

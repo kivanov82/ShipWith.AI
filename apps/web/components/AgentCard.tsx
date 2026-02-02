@@ -1,58 +1,127 @@
 'use client';
 
-import { type FC } from 'react';
+import { motion } from 'framer-motion';
+import { MessageSquare, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { Agent, useAgentverseStore } from '@/lib/store';
 
 interface AgentCardProps {
-  id: string;
-  name: string;
-  status: 'idle' | 'working' | 'waiting' | 'error';
-  colorClass: string;
-  currentTask?: string;
+  agent: Agent;
+  isSelected: boolean;
+  onClick: () => void;
+  onPromptClick?: () => void;
+  showPromptButton?: boolean;
 }
 
-const statusConfig = {
-  idle: { label: 'Idle', dotClass: 'bg-gray-500' },
-  working: { label: 'Working', dotClass: 'bg-green-500 animate-pulse' },
-  waiting: { label: 'Waiting', dotClass: 'bg-yellow-500' },
-  error: { label: 'Error', dotClass: 'bg-red-500' },
-};
+export function AgentCard({ agent, isSelected, onClick, onPromptClick, showPromptButton = true }: AgentCardProps) {
+  const { deliverables } = useAgentverseStore();
+  const isActive = agent.status !== 'idle';
 
-export const AgentCard: FC<AgentCardProps> = ({
-  id,
-  name,
-  status,
-  colorClass,
-  currentTask,
-}) => {
-  const { label, dotClass } = statusConfig[status];
+  // Check if agent has delivered work
+  const hasDelivered = deliverables.some(d => d.producedBy === agent.id);
+
+  const statusConfig = {
+    idle: { color: 'bg-zinc-600', text: hasDelivered ? 'Done' : 'Idle', icon: hasDelivered ? CheckCircle : null },
+    thinking: { color: 'bg-yellow-500', text: 'Thinking', icon: Loader2 },
+    working: { color: 'bg-green-500', text: 'Working', icon: null },
+    waiting: { color: 'bg-blue-500', text: 'Waiting', icon: Clock },
+    error: { color: 'bg-red-500', text: 'Error', icon: null },
+  }[agent.status];
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition cursor-pointer group">
-      <div className="flex items-start justify-between mb-3">
-        <div
-          className={`w-10 h-10 rounded-lg bg-${colorClass} flex items-center justify-center text-white font-bold text-sm`}
+    <motion.div
+      className={`
+        relative p-2 rounded-lg cursor-pointer
+        bg-zinc-900/90 border border-zinc-800 hover:border-zinc-600
+        ${isSelected ? 'ring-1 ring-white/30 border-zinc-600' : ''}
+        ${isActive ? 'border-l-2' : ''}
+      `}
+      style={{
+        borderLeftColor: isActive ? agent.color : undefined,
+        width: 155,
+      }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      whileHover={{ scale: 1.02 }}
+      onClick={onClick}
+    >
+      {/* Active glow */}
+      {isActive && (
+        <motion.div
+          className="absolute inset-0 rounded-lg pointer-events-none"
           style={{
-            backgroundColor: `var(--color-${colorClass}, #6366f1)`,
+            background: `radial-gradient(ellipse at center, ${agent.color}20 0%, transparent 70%)`,
           }}
+          animate={{ opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      )}
+
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-1">
+        <div
+          className="w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold shrink-0"
+          style={{ backgroundColor: agent.color, color: '#fff' }}
         >
-          {name.charAt(0)}
+          {agent.avatar}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`w-2 h-2 rounded-full ${dotClass}`}></span>
-          <span className="text-xs text-gray-500">{label}</span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-semibold text-zinc-100 truncate leading-tight">
+            {agent.name}
+          </div>
+          <div className="text-[8px] text-zinc-500 truncate">
+            {agent.role}
+          </div>
         </div>
+
+        {/* Prompt button - icon only */}
+        {showPromptButton && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPromptClick?.();
+            }}
+            className="p-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 rounded text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            <MessageSquare className="w-3 h-3" />
+          </button>
+        )}
       </div>
 
-      <h3 className="font-medium text-sm mb-1 group-hover:text-white transition">
-        {name}
-      </h3>
-      <p className="text-xs text-gray-500 truncate">
-        {currentTask || `Agent ID: ${id}`}
+      {/* Description */}
+      <p className="text-[8px] text-zinc-500 leading-relaxed mb-1.5 line-clamp-1">
+        {agent.description}
       </p>
 
-      <button className="mt-3 w-full text-xs py-1.5 rounded bg-gray-800 hover:bg-gray-700 transition text-gray-300">
-        Invoke Agent
-      </button>
-    </div>
+      {/* Status bar */}
+      <div className="flex items-center justify-between">
+        {/* Status badge */}
+        <div className={`
+          flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-medium
+          ${agent.status === 'idle' && hasDelivered ? 'bg-green-500/20 text-green-400' : ''}
+          ${agent.status === 'waiting' ? 'bg-blue-500/20 text-blue-400' : ''}
+          ${agent.status === 'thinking' ? 'bg-yellow-500/20 text-yellow-400' : ''}
+          ${agent.status === 'working' ? 'bg-green-500/20 text-green-400' : ''}
+          ${agent.status === 'idle' && !hasDelivered ? 'bg-zinc-800 text-zinc-500' : ''}
+          ${agent.status === 'error' ? 'bg-red-500/20 text-red-400' : ''}
+        `}>
+          {statusConfig.icon && (
+            <statusConfig.icon className={`w-2.5 h-2.5 ${agent.status === 'thinking' ? 'animate-spin' : ''}`} />
+          )}
+          {!statusConfig.icon && (
+            <motion.div
+              className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`}
+              animate={isActive ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
+          )}
+          <span>{statusConfig.text}</span>
+        </div>
+
+        {/* Pricing */}
+        <span className="text-[8px] font-medium text-zinc-600">
+          {agent.pricing}
+        </span>
+      </div>
+    </motion.div>
   );
-};
+}

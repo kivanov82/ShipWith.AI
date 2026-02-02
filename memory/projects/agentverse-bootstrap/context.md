@@ -8,28 +8,42 @@ This is a meta-project where Agentverse agents are building and improving Agentv
 
 The initial scaffolding has been created with:
 - 12 specialized agents configured
-- Next.js web UI with dashboard
+- Next.js web UI with interactive dashboard
 - Event bus for agent communication
 - x402 payment integration (mock + real)
 - ERC-8004 registration tooling
 - Orchestrator for workflow management
 
+### UI Features (Completed)
+- Concentric circle agent layout (3 rings: core, development, support)
+- Agent cards with metadata (name, role, description, pricing, status)
+- Comic-book style speech bubbles showing agent activity/thoughts
+- Per-agent chat interface with auto-open when agent is waiting
+- Agent detail modal on single click
+- Deliverables tree grouped by producing agent
+- Project summary panel (duration, budget, interactions)
+- v0.app-inspired dark theme with Inter font
+- Demo mode simulating multi-agent collaboration
+
 ## Active Development Areas
 
-### Phase 1: Foundation (Current)
+### Phase 1: Foundation (Complete)
 - [ ] Complete agent CLAUDE.md prompts for all agents
+- [x] Implement real-time agent status updates
 - [ ] Implement SSE event streaming in UI
-- [ ] Add real-time agent status updates
 - [ ] Create agent invocation API tests
 
-### Phase 2: Integration
+### Phase 2: Integration (Current)
 - [ ] Connect PM agent to orchestrator
 - [ ] Implement task handoff between agents
 - [ ] Add artifact storage and sharing
 - [ ] Real x402 payments on Base Sepolia
 
-### Phase 3: Polish
-- [ ] Enhance UI with better visualizations
+### Phase 3: Polish (Partial)
+- [x] Enhance UI with better visualizations (concentric circles, speech bubbles)
+- [x] Agent metadata display (name, role, pricing, status badges)
+- [x] Per-agent chat interface
+- [x] Deliverables tree and project summary
 - [ ] Add project history and replay
 - [ ] Implement agent memory persistence
 - [ ] Create onboarding flow for users
