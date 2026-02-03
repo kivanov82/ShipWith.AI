@@ -72,6 +72,17 @@ export interface Project {
   createdAt: number;
 }
 
+// Invocation state for tracking real API calls
+export interface InvocationState {
+  id: string;
+  agentId: string;
+  prompt: string;
+  status: 'pending' | 'streaming' | 'completed' | 'error';
+  output: string;
+  error?: string;
+  startedAt: number;
+}
+
 // Store state
 interface AgentverseState {
   // Agents
@@ -124,6 +135,16 @@ interface AgentverseState {
   addToTotalSpent: (amount: number) => void;
   incrementInteractionCount: () => void;
   resetProjectStats: () => void;
+
+  // Real invocations
+  invocations: Record<string, InvocationState>;
+  isRealMode: boolean;
+  setRealMode: (enabled: boolean) => void;
+  startInvocation: (agentId: string, prompt: string) => string;
+  updateInvocationOutput: (id: string, chunk: string) => void;
+  completeInvocation: (id: string, output?: string) => void;
+  failInvocation: (id: string, error: string) => void;
+  getAgentInvocation: (agentId: string) => InvocationState | null;
 }
 
 // Initial agents
@@ -252,4 +273,72 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
     set({
       projectStats: { startTime: null, totalSpent: 0, interactionCount: 0 },
     }),
+
+  // Real invocations
+  invocations: {},
+  isRealMode: false,
+  setRealMode: (enabled) => set({ isRealMode: enabled }),
+  startInvocation: (agentId, prompt) => {
+    const id = nanoid();
+    set((state) => ({
+      invocations: {
+        ...state.invocations,
+        [id]: {
+          id,
+          agentId,
+          prompt,
+          status: 'pending',
+          output: '',
+          startedAt: Date.now(),
+        },
+      },
+    }));
+    return id;
+  },
+  updateInvocationOutput: (id, chunk) =>
+    set((state) => ({
+      invocations: {
+        ...state.invocations,
+        [id]: state.invocations[id]
+          ? {
+              ...state.invocations[id],
+              status: 'streaming',
+              output: state.invocations[id].output + chunk,
+            }
+          : state.invocations[id],
+      },
+    })),
+  completeInvocation: (id, output) =>
+    set((state) => ({
+      invocations: {
+        ...state.invocations,
+        [id]: state.invocations[id]
+          ? {
+              ...state.invocations[id],
+              status: 'completed',
+              output: output ?? state.invocations[id].output,
+            }
+          : state.invocations[id],
+      },
+    })),
+  failInvocation: (id, error) =>
+    set((state) => ({
+      invocations: {
+        ...state.invocations,
+        [id]: state.invocations[id]
+          ? {
+              ...state.invocations[id],
+              status: 'error',
+              error,
+            }
+          : state.invocations[id],
+      },
+    })),
+  getAgentInvocation: (agentId) => {
+    const state = get();
+    const invocations = Object.values(state.invocations).filter(
+      (i) => i.agentId === agentId && (i.status === 'pending' || i.status === 'streaming')
+    );
+    return invocations[0] || null;
+  },
 }));

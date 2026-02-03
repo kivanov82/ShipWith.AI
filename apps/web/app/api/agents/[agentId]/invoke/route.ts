@@ -13,6 +13,10 @@ export async function POST(
     const body = await request.json();
     const { prompt, projectId, context } = body;
 
+    // Check if streaming is requested
+    const url = new URL(request.url);
+    const stream = url.searchParams.get('stream') === 'true';
+
     // Validate agent exists
     const agentDir = path.join(process.cwd(), '..', '..', 'agents', agentId);
     const configPath = path.join(agentDir, 'config.json');
@@ -34,11 +38,15 @@ export async function POST(
     const mode = process.env.AGENTVERSE_MODE || 'cli';
 
     if (mode === 'api') {
+      if (stream) {
+        // Streaming API mode
+        return invokeViaAPIStreaming(config, systemPrompt, prompt, context);
+      }
       // Use Anthropic API directly
       const response = await invokeViaAPI(config, systemPrompt, prompt, context);
       return NextResponse.json(response);
     } else {
-      // Use Claude CLI
+      // Use Claude CLI (no streaming support yet)
       const response = await invokeViaCLI(agentId, prompt, projectId);
       return NextResponse.json(response);
     }
@@ -143,6 +151,114 @@ async function invokeViaAPI(
   const output = data.content?.[0]?.text || '';
 
   return { success: true, output };
+}
+
+// Streaming version using SSE
+function invokeViaAPIStreaming(
+  config: Record<string, unknown>,
+  systemPrompt: string,
+  prompt: string,
+  context?: Record<string, unknown>
+): Response {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const encoder = new TextEncoder();
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 8192,
+            stream: true,
+            system: systemPrompt,
+            messages: [
+              {
+                role: 'user',
+                content: context
+                  ? `Context: ${JSON.stringify(context)}\n\nTask: ${prompt}`
+                  : prompt,
+              },
+            ],
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error })}\n\n`));
+          controller.close();
+          return;
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'No response body' })}\n\n`));
+          controller.close();
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                // Extract text from content_block_delta events
+                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ text: parsed.delta.text })}\n\n`)
+                  );
+                }
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      } catch (error) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ error: String(error) })}\n\n`)
+        );
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
 
 // GET: Get agent info

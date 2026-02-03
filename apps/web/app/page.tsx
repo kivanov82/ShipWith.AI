@@ -16,6 +16,7 @@ import {
   CircleDot,
   Package,
   BarChart3,
+  Zap,
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -25,6 +26,8 @@ export default function Dashboard() {
     activeProjectId,
     setActiveProject,
     deliverables,
+    isRealMode,
+    setRealMode,
   } = useAgentverseStore();
 
   const handleRunDemo = async () => {
@@ -105,11 +108,30 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Demo Button */}
-        <div className="p-3 border-t border-zinc-800">
+        {/* Mode Toggle & Demo Button */}
+        <div className="p-3 border-t border-zinc-800 space-y-2">
+          {/* Real Mode Toggle */}
+          <button
+            onClick={() => setRealMode(!isRealMode)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${
+              isRealMode
+                ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
+                : 'bg-zinc-800/50 border-zinc-700 text-zinc-500 hover:text-zinc-400'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5" />
+              Real Mode
+            </span>
+            <div className={`w-8 h-4 rounded-full transition-colors ${isRealMode ? 'bg-yellow-500' : 'bg-zinc-700'}`}>
+              <div className={`w-3 h-3 rounded-full bg-white mt-0.5 transition-transform ${isRealMode ? 'translate-x-4.5 ml-0.5' : 'ml-0.5'}`} />
+            </div>
+          </button>
+
+          {/* Demo Button */}
           <button
             onClick={handleRunDemo}
-            disabled={isRunningDemo}
+            disabled={isRunningDemo || isRealMode}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-400 text-zinc-900 rounded-lg text-xs font-medium transition-colors"
           >
             {isRunningDemo ? (
@@ -124,6 +146,12 @@ export default function Dashboard() {
               </>
             )}
           </button>
+
+          {isRealMode && (
+            <p className="text-[9px] text-zinc-600 text-center">
+              Click any agent to send real prompts
+            </p>
+          )}
         </div>
       </aside>
 
