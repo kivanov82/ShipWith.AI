@@ -7,6 +7,7 @@ import { Logo } from '@/components/Logo';
 import { AgentCircle } from '@/components/AgentCircle';
 import { DeliverablesTree } from '@/components/DeliverablesTree';
 import { ProjectSummary } from '@/components/ProjectSummary';
+import { SessionPanel } from '@/components/SessionPanel';
 import {
   Play,
   FolderOpen,
@@ -28,7 +29,29 @@ export default function Dashboard() {
     deliverables,
     isRealMode,
     setRealMode,
+    activeSession,
+    requestAllDeliveries,
+    requestDelivery,
+    agents,
   } = useAgentverseStore();
+
+  // Handle delivery requests (will integrate with x402 payment)
+  const handleRequestDelivery = async (sessionId: string, agentId?: string) => {
+    if (agentId) {
+      // Single agent delivery
+      const agent = agents.find(a => a.id === agentId);
+      if (agent) {
+        requestDelivery(sessionId, agentId, 'Deliver based on session context', agent.pricing);
+        // TODO: Trigger x402 payment flow
+        console.log(`[x402] Would request payment for ${agent.name}: ${agent.pricing}`);
+      }
+    } else {
+      // All agents delivery
+      const deliveryIds = requestAllDeliveries(sessionId);
+      // TODO: Trigger x402 payment flow for all
+      console.log(`[x402] Would request payments for ${deliveryIds.length} agents`);
+    }
+  };
 
   const handleRunDemo = async () => {
     setIsRunningDemo(true);
@@ -177,10 +200,12 @@ export default function Dashboard() {
         {/* Content */}
         <div className="flex-1 flex flex-col lg:flex-row min-h-0">
           {/* Center - Agent Circle */}
-          <div className="flex-1 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-zinc-800">
+          <div className="flex-1 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-zinc-800 relative">
             <div className="flex-1 p-2 overflow-hidden">
               <AgentCircle />
             </div>
+            {/* Session Panel - top right of agent area */}
+            <SessionPanel onRequestDelivery={handleRequestDelivery} />
           </div>
 
           {/* Right Panel */}

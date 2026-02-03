@@ -15,13 +15,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useAgentverseStore, type Agent } from '@/lib/store';
 import { AgentNode } from './AgentNode';
 
-const nodeTypes = { agent: AgentNode };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const nodeTypes: any = { agent: AgentNode };
 
 // Layout agents in a grid pattern
-const createNodes = (agents: ReturnType<typeof useAgentverseStore>['agents']): Node[] => {
+const createNodes = (agents: Agent[]): Node[] => {
   const cols = 4;
   const xGap = 220;
   const yGap = 180;
@@ -66,7 +67,7 @@ export function AgentFlow() {
 
   const initialNodes = useMemo(() => createNodes(agents), []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
 
   // Update nodes when agents change
   useEffect(() => {

@@ -8,10 +8,11 @@ import { invokeAgent } from '@/lib/agent-client';
 
 interface AgentChatBubbleProps {
   agent: Agent;
+  mode: 'chat' | 'job';
   onClose: () => void;
 }
 
-export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
+export function AgentChatBubble({ agent, mode, onClose }: AgentChatBubbleProps) {
   const {
     chatMessages,
     addChatMessage,
@@ -22,6 +23,9 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
     failInvocation,
     getAgentInvocation,
     updateAgentStatus,
+    activeSession,
+    addAgentToSession,
+    updateSessionContext,
   } = useAgentverseStore();
   const [input, setInput] = useState('');
   const [isInvoking, setIsInvoking] = useState(false);
@@ -50,9 +54,9 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
   const handleRealInvocation = async (prompt: string) => {
     setIsInvoking(true);
     setStreamingOutput('');
-    updateAgentStatus(agent.id, 'thinking', 'Processing request...');
+    updateAgentStatus(agent.id, 'thinking', mode === 'job' ? 'Processing job...' : 'Thinking...');
 
-    const invocationId = startInvocation(agent.id, prompt);
+    const invocationId = startInvocation(agent.id, prompt, mode);
 
     try {
       await invokeAgent({
@@ -73,6 +77,15 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
           });
           setStreamingOutput('');
           updateAgentStatus(agent.id, 'idle');
+
+          // Save context to session if in chat mode
+          if (activeSession && mode === 'chat') {
+            const existingContext = activeSession.context[agent.id] || '';
+            const newContext = existingContext
+              ? `${existingContext}\n---\n${response.output.substring(0, 500)}`
+              : response.output.substring(0, 500);
+            updateSessionContext(activeSession.id, agent.id, newContext);
+          }
         },
         onError: (error) => {
           failInvocation(invocationId, error.message);
@@ -102,6 +115,11 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
     addChatMessage({ role: 'user', content: prompt });
     setInput('');
 
+    // Add agent to session when chatting (context building)
+    if (activeSession && mode === 'chat') {
+      addAgentToSession(activeSession.id, agent.id);
+    }
+
     if (isRealMode) {
       await handleRealInvocation(prompt);
     }
@@ -129,9 +147,9 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
       exit={{ opacity: 0, x: 20, scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden">
+      <div className={`bg-zinc-900 border rounded-xl shadow-2xl overflow-hidden ${mode === 'job' ? 'border-emerald-700' : 'border-zinc-700'}`}>
         {/* Header */}
-        <div className="px-3 py-2 border-b border-zinc-800 flex items-center gap-2">
+        <div className={`px-3 py-2 border-b flex items-center gap-2 ${mode === 'job' ? 'border-emerald-800 bg-emerald-950/30' : 'border-zinc-800'}`}>
           <div
             className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold"
             style={{ backgroundColor: agent.color, color: '#fff' }}
@@ -139,6 +157,9 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
             {agent.avatar}
           </div>
           <span className="flex-1 text-xs font-medium text-zinc-200">{agent.name}</span>
+          <span className={`text-[9px] px-1.5 py-0.5 rounded ${mode === 'job' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-700 text-zinc-400'}`}>
+            {mode === 'job' ? 'Job' : 'Chat'}
+          </span>
           <button
             onClick={onClose}
             className="p-1 hover:bg-zinc-800 rounded text-zinc-500 hover:text-zinc-300"
@@ -157,14 +178,18 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
         {/* Messages */}
         <div className="p-3 space-y-2 max-h-48 overflow-y-auto">
           {agentMessages.length === 0 && !streamingOutput ? (
-            <div className="text-center py-3 text-zinc-600 text-[11px]">
-              {isRealMode ? (
-                <div className="flex items-center justify-center gap-1.5">
-                  <Zap className="w-3 h-3 text-yellow-500" />
-                  <span>Real mode - Send a prompt to {agent.name.split(' ')[0]}</span>
+            <div className="text-center py-3 text-[11px]">
+              {mode === 'job' ? (
+                <div className="space-y-1">
+                  <div className="text-emerald-400 font-medium">Request a Job</div>
+                  <div className="text-zinc-500">Describe what you need built</div>
+                  <div className="text-zinc-600 text-[10px]">Cost: {agent.pricing}</div>
                 </div>
               ) : (
-                `Send a prompt to ${agent.name.split(' ')[0]}`
+                <div className="space-y-1">
+                  <div className="text-zinc-400">Chat with {agent.name.split(' ')[0]}</div>
+                  <div className="text-zinc-600 text-[10px]">Free - ask questions, get advice</div>
+                </div>
               )}
             </div>
           ) : (
@@ -224,20 +249,20 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="p-2 border-t border-zinc-800">
+        <form onSubmit={handleSubmit} className={`p-2 border-t ${mode === 'job' ? 'border-emerald-800' : 'border-zinc-800'}`}>
           <div className="flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isInvoking ? 'Waiting for response...' : 'Type a message...'}
+              placeholder={isInvoking ? 'Waiting for response...' : mode === 'job' ? 'Describe the job...' : 'Ask a question...'}
               disabled={isInvoking}
-              className="flex-1 px-2.5 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-[11px] text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-600 disabled:opacity-50"
+              className={`flex-1 px-2.5 py-1.5 bg-zinc-800 border rounded-lg text-[11px] text-zinc-200 placeholder-zinc-500 focus:outline-none disabled:opacity-50 ${mode === 'job' ? 'border-emerald-700 focus:border-emerald-600' : 'border-zinc-700 focus:border-zinc-600'}`}
             />
             <button
               type="submit"
               disabled={!input.trim() || isInvoking}
-              className="px-2.5 py-1.5 bg-white text-zinc-900 rounded-lg hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-500 transition-colors"
+              className={`px-2.5 py-1.5 rounded-lg transition-colors disabled:bg-zinc-700 disabled:text-zinc-500 ${mode === 'job' ? 'bg-emerald-500 text-white hover:bg-emerald-400' : 'bg-white text-zinc-900 hover:bg-zinc-200'}`}
             >
               {isInvoking ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -246,10 +271,17 @@ export function AgentChatBubble({ agent, onClose }: AgentChatBubbleProps) {
               )}
             </button>
           </div>
-          {isRealMode && (
-            <div className="mt-1.5 text-[9px] text-zinc-600 flex items-center gap-1">
-              <Zap className="w-2.5 h-2.5 text-yellow-500" />
-              Real mode: ~{agent.pricing}
+          {mode === 'job' && (
+            <div className="mt-1.5 text-[9px] text-emerald-500 flex items-center gap-1">
+              <Zap className="w-2.5 h-2.5" />
+              {isRealMode ? `Payment required: ~${agent.pricing} USDC` : `Job will cost ~${agent.pricing}`}
+            </div>
+          )}
+          {mode === 'chat' && (
+            <div className="mt-1.5 text-[9px] text-zinc-600">
+              {activeSession
+                ? `Building context for "${activeSession.name}"`
+                : 'Free chat - start a session to build context'}
             </div>
           )}
         </form>

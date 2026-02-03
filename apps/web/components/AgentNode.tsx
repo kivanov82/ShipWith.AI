@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { useAgentverseStore, type Agent } from '@/lib/store';
 import { MessageSquare, Loader2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
@@ -14,11 +14,12 @@ const statusConfig = {
   error: { icon: AlertCircle, pulse: false, ring: 'ring-red-500/50' },
 };
 
-interface AgentNodeData extends Agent {
-  isSelected?: boolean;
+interface AgentNodeProps {
+  data: Agent & { isSelected?: boolean };
+  selected?: boolean;
 }
 
-function AgentNodeComponent({ data, selected }: NodeProps<AgentNodeData>) {
+function AgentNodeComponent({ data, selected }: AgentNodeProps) {
   const { setSelectedAgent, selectedAgent } = useAgentverseStore();
   const config = statusConfig[data.status];
   const StatusIcon = config.icon;

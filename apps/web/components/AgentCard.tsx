@@ -1,18 +1,19 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MessageSquare, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { MessageSquare, CheckCircle, Clock, Loader2, Briefcase } from 'lucide-react';
 import { Agent, useAgentverseStore } from '@/lib/store';
 
 interface AgentCardProps {
   agent: Agent;
   isSelected: boolean;
   onClick: () => void;
-  onPromptClick?: () => void;
-  showPromptButton?: boolean;
+  onChatClick?: () => void;
+  onJobClick?: () => void;
+  showButtons?: boolean;
 }
 
-export function AgentCard({ agent, isSelected, onClick, onPromptClick, showPromptButton = true }: AgentCardProps) {
+export function AgentCard({ agent, isSelected, onClick, onChatClick, onJobClick, showButtons = true }: AgentCardProps) {
   const { deliverables } = useAgentverseStore();
   const isActive = agent.status !== 'idle';
 
@@ -73,17 +74,30 @@ export function AgentCard({ agent, isSelected, onClick, onPromptClick, showPromp
           </div>
         </div>
 
-        {/* Prompt button - icon only */}
-        {showPromptButton && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPromptClick?.();
-            }}
-            className="p-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 rounded text-zinc-400 hover:text-zinc-200 transition-colors"
-          >
-            <MessageSquare className="w-3 h-3" />
-          </button>
+        {/* Chat & Job buttons */}
+        {showButtons && (
+          <div className="flex gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onChatClick?.();
+              }}
+              title="Chat (free)"
+              className="p-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 hover:border-zinc-600 rounded text-zinc-400 hover:text-zinc-200 transition-colors"
+            >
+              <MessageSquare className="w-2.5 h-2.5" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onJobClick?.();
+              }}
+              title="Request job (paid)"
+              className="p-1 bg-zinc-800 hover:bg-emerald-900/50 border border-zinc-700 hover:border-emerald-600 rounded text-zinc-400 hover:text-emerald-400 transition-colors"
+            >
+              <Briefcase className="w-2.5 h-2.5" />
+            </button>
+          </div>
         )}
       </div>
 

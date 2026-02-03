@@ -18,6 +18,8 @@ export interface Agent {
   walletAddress?: string;
   onchainRanking?: number;
   metadata?: Record<string, unknown>;
+  // Index signature for ReactFlow compatibility
+  [key: string]: unknown;
 }
 
 // Project stats for tracking
@@ -77,10 +79,37 @@ export interface InvocationState {
   id: string;
   agentId: string;
   prompt: string;
+  mode: 'chat' | 'job';  // chat = free conversation, job = paid work
   status: 'pending' | 'streaming' | 'completed' | 'error';
   output: string;
   error?: string;
   startedAt: number;
+  cost?: number;  // USDC cost for jobs
+}
+
+// Session for multi-agent project context building
+export interface Session {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'context-building' | 'ready-for-delivery' | 'delivering' | 'completed';
+  involvedAgents: string[];  // Agent IDs that user has chatted with
+  context: Record<string, string>;  // agentId -> context summary from chat
+  deliveryRequests: DeliveryRequest[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+// Delivery request for paid work
+export interface DeliveryRequest {
+  id: string;
+  agentId: string;
+  description: string;
+  estimatedCost: string;
+  status: 'pending' | 'paid' | 'in-progress' | 'completed' | 'failed';
+  txHash?: string;
+  output?: string;
+  createdAt: number;
 }
 
 // Store state
@@ -140,11 +169,23 @@ interface AgentverseState {
   invocations: Record<string, InvocationState>;
   isRealMode: boolean;
   setRealMode: (enabled: boolean) => void;
-  startInvocation: (agentId: string, prompt: string) => string;
+  startInvocation: (agentId: string, prompt: string, mode: 'chat' | 'job') => string;
   updateInvocationOutput: (id: string, chunk: string) => void;
-  completeInvocation: (id: string, output?: string) => void;
+  completeInvocation: (id: string, output?: string, cost?: number) => void;
   failInvocation: (id: string, error: string) => void;
   getAgentInvocation: (agentId: string) => InvocationState | null;
+
+  // Sessions
+  sessions: Session[];
+  activeSession: Session | null;
+  createSession: (name: string, description?: string) => string;
+  updateSession: (id: string, updates: Partial<Session>) => void;
+  addAgentToSession: (sessionId: string, agentId: string) => void;
+  updateSessionContext: (sessionId: string, agentId: string, context: string) => void;
+  setActiveSession: (session: Session | null) => void;
+  requestDelivery: (sessionId: string, agentId: string, description: string, estimatedCost: string) => string;
+  requestAllDeliveries: (sessionId: string) => string[];
+  updateDeliveryStatus: (sessionId: string, deliveryId: string, status: DeliveryRequest['status'], output?: string, txHash?: string) => void;
 }
 
 // Initial agents
@@ -278,7 +319,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
   invocations: {},
   isRealMode: false,
   setRealMode: (enabled) => set({ isRealMode: enabled }),
-  startInvocation: (agentId, prompt) => {
+  startInvocation: (agentId, prompt, mode) => {
     const id = nanoid();
     set((state) => ({
       invocations: {
@@ -287,6 +328,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
           id,
           agentId,
           prompt,
+          mode,
           status: 'pending',
           output: '',
           startedAt: Date.now(),
@@ -308,7 +350,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
           : state.invocations[id],
       },
     })),
-  completeInvocation: (id, output) =>
+  completeInvocation: (id, output, cost) =>
     set((state) => ({
       invocations: {
         ...state.invocations,
@@ -317,6 +359,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
               ...state.invocations[id],
               status: 'completed',
               output: output ?? state.invocations[id].output,
+              cost,
             }
           : state.invocations[id],
       },
@@ -341,4 +384,141 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
     );
     return invocations[0] || null;
   },
+
+  // Sessions
+  sessions: [],
+  activeSession: null,
+  createSession: (name, description) => {
+    const id = nanoid();
+    const session: Session = {
+      id,
+      name,
+      description,
+      status: 'context-building',
+      involvedAgents: [],
+      context: {},
+      deliveryRequests: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    set((state) => ({
+      sessions: [session, ...state.sessions],
+      activeSession: session,
+    }));
+    return id;
+  },
+  updateSession: (id, updates) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === id ? { ...s, ...updates, updatedAt: Date.now() } : s
+      ),
+      activeSession: state.activeSession?.id === id
+        ? { ...state.activeSession, ...updates, updatedAt: Date.now() }
+        : state.activeSession,
+    })),
+  addAgentToSession: (sessionId, agentId) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId && !s.involvedAgents.includes(agentId)
+          ? { ...s, involvedAgents: [...s.involvedAgents, agentId], updatedAt: Date.now() }
+          : s
+      ),
+      activeSession: state.activeSession?.id === sessionId && !state.activeSession.involvedAgents.includes(agentId)
+        ? { ...state.activeSession, involvedAgents: [...state.activeSession.involvedAgents, agentId], updatedAt: Date.now() }
+        : state.activeSession,
+    })),
+  updateSessionContext: (sessionId, agentId, context) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId
+          ? { ...s, context: { ...s.context, [agentId]: context }, updatedAt: Date.now() }
+          : s
+      ),
+      activeSession: state.activeSession?.id === sessionId
+        ? { ...state.activeSession, context: { ...state.activeSession.context, [agentId]: context }, updatedAt: Date.now() }
+        : state.activeSession,
+    })),
+  setActiveSession: (session) => set({ activeSession: session }),
+  requestDelivery: (sessionId, agentId, description, estimatedCost) => {
+    const deliveryId = nanoid();
+    const delivery: DeliveryRequest = {
+      id: deliveryId,
+      agentId,
+      description,
+      estimatedCost,
+      status: 'pending',
+      createdAt: Date.now(),
+    };
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId
+          ? { ...s, deliveryRequests: [...s.deliveryRequests, delivery], status: 'ready-for-delivery', updatedAt: Date.now() }
+          : s
+      ),
+      activeSession: state.activeSession?.id === sessionId
+        ? { ...state.activeSession, deliveryRequests: [...state.activeSession.deliveryRequests, delivery], status: 'ready-for-delivery', updatedAt: Date.now() }
+        : state.activeSession,
+    }));
+    return deliveryId;
+  },
+  requestAllDeliveries: (sessionId) => {
+    const state = get();
+    const session = state.sessions.find((s) => s.id === sessionId);
+    if (!session) return [];
+
+    const deliveryIds: string[] = [];
+    const newDeliveries: DeliveryRequest[] = [];
+
+    session.involvedAgents.forEach((agentId) => {
+      const agent = state.agents.find((a) => a.id === agentId);
+      if (agent) {
+        const deliveryId = nanoid();
+        deliveryIds.push(deliveryId);
+        newDeliveries.push({
+          id: deliveryId,
+          agentId,
+          description: `Deliver based on session context`,
+          estimatedCost: agent.pricing.split('-')[1] || agent.pricing, // Use max price estimate
+          status: 'pending',
+          createdAt: Date.now(),
+        });
+      }
+    });
+
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId
+          ? { ...s, deliveryRequests: [...s.deliveryRequests, ...newDeliveries], status: 'ready-for-delivery', updatedAt: Date.now() }
+          : s
+      ),
+      activeSession: state.activeSession?.id === sessionId
+        ? { ...state.activeSession, deliveryRequests: [...state.activeSession.deliveryRequests, ...newDeliveries], status: 'ready-for-delivery', updatedAt: Date.now() }
+        : state.activeSession,
+    }));
+
+    return deliveryIds;
+  },
+  updateDeliveryStatus: (sessionId, deliveryId, status, output, txHash) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId
+          ? {
+              ...s,
+              deliveryRequests: s.deliveryRequests.map((d) =>
+                d.id === deliveryId ? { ...d, status, output, txHash } : d
+              ),
+              updatedAt: Date.now(),
+            }
+          : s
+      ),
+      activeSession: state.activeSession?.id === sessionId
+        ? {
+            ...state.activeSession,
+            deliveryRequests: state.activeSession.deliveryRequests.map((d) =>
+              d.id === deliveryId ? { ...d, status, output, txHash } : d
+            ),
+            updatedAt: Date.now(),
+          }
+        : state.activeSession,
+    })),
 }));

@@ -41,11 +41,14 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
   try {
     if (stream && onStream) {
       // Streaming mode
+      console.log('[agent-client] Starting streaming request to:', url);
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, projectId, context }),
       });
+
+      console.log('[agent-client] Response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -61,11 +64,17 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
       const decoder = new TextDecoder();
       let fullOutput = '';
 
+      console.log('[agent-client] Starting to read stream...');
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('[agent-client] Stream done');
+          break;
+        }
 
         const chunk = decoder.decode(value, { stream: true });
+        console.log('[agent-client] Received chunk:', chunk.substring(0, 100));
 
         // Parse SSE events
         const lines = chunk.split('\n');
@@ -73,6 +82,7 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') {
+              console.log('[agent-client] Received [DONE]');
               break;
             }
             try {
@@ -90,6 +100,7 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
         }
       }
 
+      console.log('[agent-client] Final output length:', fullOutput.length);
       const result: AgentResponse = { success: true, output: fullOutput };
       onComplete?.(result);
       return result;
@@ -117,6 +128,7 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
       return result;
     }
   } catch (error) {
+    console.error('[agent-client] Error:', error);
     const err = error instanceof Error ? error : new Error(String(error));
     onError?.(err);
     return { success: false, output: '', error: err.message };

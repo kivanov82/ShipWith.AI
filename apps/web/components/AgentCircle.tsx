@@ -66,9 +66,25 @@ function ConnectionLine({ from, to, type }: { from: AgentPosition; to: AgentPosi
 }
 
 export function AgentCircle() {
-  const { agents, activities, activeConnections, chatMessages } = useAgentverseStore();
+  const { agents, activities, activeConnections, chatMessages, activeSession, createSession } = useAgentverseStore();
   const [detailAgent, setDetailAgent] = useState<Agent | null>(null);
   const [chatAgent, setChatAgent] = useState<string | null>(null);
+  const [chatMode, setChatMode] = useState<'chat' | 'job'>('chat');
+  const [showSessionInput, setShowSessionInput] = useState(false);
+  const [sessionName, setSessionName] = useState('');
+
+  const handleStartSession = () => {
+    if (sessionName.trim()) {
+      createSession(sessionName.trim());
+      setSessionName('');
+      setShowSessionInput(false);
+    }
+  };
+
+  const openChat = (agentId: string, mode: 'chat' | 'job') => {
+    setChatAgent(agentId);
+    setChatMode(mode);
+  };
 
   // Auto-open chat for agent that's asking questions
   useEffect(() => {
@@ -175,13 +191,83 @@ export function AgentCircle() {
         </AnimatePresence>
       </svg>
 
-      {/* Center label */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none">
-        <div className="w-16 h-16 rounded-full bg-zinc-900/50 border border-zinc-800 flex items-center justify-center">
-          <span className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider">
-            {activeConnections.length > 0 ? 'Active' : 'Ready'}
-          </span>
-        </div>
+      {/* Center button/label */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+        {!activeSession ? (
+          /* No session - show Start button */
+          showSessionInput ? (
+            <motion.div
+              className="bg-zinc-900 border border-emerald-600 rounded-xl p-3 shadow-xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            >
+              <input
+                type="text"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                placeholder="Project name..."
+                className="w-32 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-600 mb-2"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleStartSession();
+                  if (e.key === 'Escape') setShowSessionInput(false);
+                }}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setShowSessionInput(false)}
+                  className="flex-1 text-[10px] text-zinc-500 hover:text-zinc-300 py-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleStartSession}
+                  disabled={!sessionName.trim()}
+                  className="flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white py-1 rounded transition-colors"
+                >
+                  Start
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              onClick={() => setShowSessionInput(true)}
+              className="w-20 h-20 rounded-full bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-400 flex flex-col items-center justify-center cursor-pointer transition-colors shadow-lg shadow-emerald-900/50"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+                Start
+              </span>
+              <span className="text-[8px] text-emerald-200">
+                Session
+              </span>
+            </motion.button>
+          )
+        ) : (
+          /* Active session - show status */
+          <motion.div
+            className={`w-20 h-20 rounded-full flex flex-col items-center justify-center border-2 ${
+              activeSession.status === 'context-building'
+                ? 'bg-emerald-900/50 border-emerald-600'
+                : activeSession.status === 'delivering'
+                ? 'bg-yellow-900/50 border-yellow-600'
+                : 'bg-green-900/50 border-green-600'
+            }`}
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+          >
+            <span className="text-[8px] font-medium text-zinc-400 uppercase">
+              {activeSession.status === 'context-building' ? 'Building' : activeSession.status.replace('-', ' ')}
+            </span>
+            <span className="text-[10px] font-bold text-white truncate max-w-[70px] px-1">
+              {activeSession.name}
+            </span>
+            <span className="text-[8px] text-emerald-400">
+              {activeSession.involvedAgents.length} agents
+            </span>
+          </motion.div>
+        )}
       </div>
 
       {/* Agent cards and bubbles */}
@@ -231,6 +317,7 @@ export function AgentCircle() {
               {isChatOpen && (
                 <AgentChatBubble
                   agent={agent}
+                  mode={chatMode}
                   onClose={() => setChatAgent(null)}
                 />
               )}
@@ -241,8 +328,9 @@ export function AgentCircle() {
               agent={agent}
               isSelected={chatAgent === agent.id}
               onClick={() => setDetailAgent(agent)}
-              onPromptClick={() => setChatAgent(agent.id)}
-              showPromptButton={agent.status === 'idle' || agent.status === 'waiting'}
+              onChatClick={() => openChat(agent.id, 'chat')}
+              onJobClick={() => openChat(agent.id, 'job')}
+              showButtons={agent.status === 'idle' || agent.status === 'waiting'}
             />
           </div>
         );

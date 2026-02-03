@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // SSE endpoint for live event streaming
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();

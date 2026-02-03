@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore, type Activity } from '@/lib/store';
+import { useAgentverseStore, type Activity, type Agent } from '@/lib/store';
 import {
   MessageSquare,
   ArrowRight,
@@ -30,7 +30,7 @@ function formatTime(timestamp: number) {
   });
 }
 
-function getAgentName(id: string, agents: ReturnType<typeof useAgentverseStore>['agents']) {
+function getAgentName(id: string, agents: Agent[]) {
   return agents.find((a) => a.id === id)?.name || id;
 }
 
