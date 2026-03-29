@@ -18,6 +18,8 @@ out/
 
 # IDE
 .vscode/
+.idea/
+*.iml
 *.swp
 *.swo
 .DS_Store

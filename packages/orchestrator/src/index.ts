@@ -142,18 +142,30 @@ export function getOrchestrator(): Orchestrator {
 
 // Standard workflow templates
 export const workflowTemplates = {
-  // Full web3 project pipeline
+  // Full web3 frontend project pipeline
   fullProject: [
     { agentId: 'ux-analyst' as AgentId, task: 'Research and create user flows', dependencies: [] },
     { agentId: 'ui-designer' as AgentId, task: 'Create visual designs', dependencies: ['ux-analyst'] },
     { agentId: 'ui-developer' as AgentId, task: 'Build frontend components', dependencies: ['ui-designer'] },
-    { agentId: 'backend-developer' as AgentId, task: 'Build API and backend', dependencies: ['ux-analyst'] },
+    { agentId: 'backend-developer' as AgentId, task: 'Set up API integrations and data fetching', dependencies: ['ux-analyst'] },
     { agentId: 'solidity-developer' as AgentId, task: 'Write smart contracts', dependencies: ['ux-analyst'] },
     { agentId: 'solidity-auditor' as AgentId, task: 'Audit smart contracts', dependencies: ['solidity-developer'] },
     { agentId: 'unit-tester' as AgentId, task: 'Write unit tests', dependencies: ['ui-developer', 'backend-developer', 'solidity-developer'] },
     { agentId: 'qa-tester' as AgentId, task: 'End-to-end testing', dependencies: ['unit-tester'] },
     { agentId: 'infrastructure' as AgentId, task: 'Set up deployment', dependencies: ['qa-tester', 'solidity-auditor'] },
     { agentId: 'tech-writer' as AgentId, task: 'Write documentation', dependencies: ['infrastructure'] },
+  ],
+
+  // Web3 frontend app (no smart contracts)
+  web3Frontend: [
+    { agentId: 'ux-analyst' as AgentId, task: 'Research and create user flows', dependencies: [] },
+    { agentId: 'ui-designer' as AgentId, task: 'Create visual designs', dependencies: ['ux-analyst'] },
+    { agentId: 'ui-developer' as AgentId, task: 'Build frontend with wallet integration', dependencies: ['ui-designer'] },
+    { agentId: 'backend-developer' as AgentId, task: 'Set up API routes and data fetching', dependencies: ['ui-designer'] },
+    { agentId: 'unit-tester' as AgentId, task: 'Write unit tests', dependencies: ['ui-developer', 'backend-developer'] },
+    { agentId: 'qa-tester' as AgentId, task: 'End-to-end testing', dependencies: ['unit-tester'] },
+    { agentId: 'marketing' as AgentId, task: 'Create launch content', dependencies: ['ui-developer'] },
+    { agentId: 'tech-writer' as AgentId, task: 'Write documentation', dependencies: ['qa-tester'] },
   ],
 
   // Frontend-only project

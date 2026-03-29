@@ -157,7 +157,7 @@ export function AgentCircle() {
   };
 
   return (
-    <div className="relative w-full h-full min-h-[450px] flex items-center justify-center overflow-hidden">
+    <div className="relative w-full h-full min-h-[450px] flex items-center justify-center overflow-hidden agent-circle-container">
       {/* Ring guides */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid meet">
         {Object.values(ringRadii).map((radius, i) => (

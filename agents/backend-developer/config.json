@@ -1,18 +1,18 @@
 {
   "id": "backend-developer",
-  "name": "Agentverse: Backend Developer",
-  "description": "Backend development specialist building APIs, services, and database integrations with Node.js/TypeScript. Expert in RESTful design, authentication, and cloud services.",
+  "name": "Agentverse: Integration Developer",
+  "description": "API integration and serverless specialist. Connects frontends to external APIs, blockchain data sources, subgraphs, and handles wallet-based authentication within Next.js.",
   "capabilities": [
-    "api-development",
-    "nodejs",
+    "api-integration",
+    "nextjs-api-routes",
     "typescript",
-    "database-design",
-    "authentication",
-    "cloud-services",
-    "graphql",
-    "websockets",
+    "subgraph-queries",
+    "wallet-authentication",
+    "siwe",
+    "data-fetching",
     "caching",
-    "message-queues"
+    "edge-functions",
+    "graphql"
   ],
   "pricing": {
     "baseRate": "0.05",
@@ -23,13 +23,13 @@
     {
       "name": "task",
       "type": "text",
-      "description": "API or backend service requirements",
+      "description": "Integration or API route requirements",
       "required": true
     },
     {
-      "name": "schema",
+      "name": "apiSpec",
       "type": "artifact",
-      "description": "Database schema or data models",
+      "description": "External API documentation or subgraph schema",
       "required": false
     }
   ],
@@ -37,13 +37,13 @@
     {
       "name": "code",
       "type": "code",
-      "description": "Backend service implementation",
+      "description": "API routes, integration code, and type definitions",
       "required": true
     },
     {
       "name": "apiDocs",
       "type": "artifact",
-      "description": "API documentation (OpenAPI/Swagger)",
+      "description": "API route documentation",
       "required": false
     }
   ],

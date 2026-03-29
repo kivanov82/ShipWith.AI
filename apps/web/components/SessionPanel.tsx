@@ -71,7 +71,7 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
   }, 0) || 0;
 
   return (
-    <div className="absolute top-4 right-4 z-50 w-72">
+    <div className="absolute top-4 right-4 z-50 w-72 session-panel">
       {/* Main Panel */}
       <motion.div
         className="bg-zinc-900/95 backdrop-blur border border-zinc-800 rounded-xl shadow-2xl overflow-hidden"

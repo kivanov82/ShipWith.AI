@@ -1,6 +1,23 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
 
+// Fire-and-forget persistence helpers
+const syncToApi = (url: string, data: unknown) => {
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {}); // Silently fail — local state is source of truth
+};
+
+const patchApi = (url: string, data: unknown) => {
+  fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {});
+};
+
 // Agent types
 export interface Agent {
   id: string;
@@ -186,6 +203,22 @@ interface AgentverseState {
   requestDelivery: (sessionId: string, agentId: string, description: string, estimatedCost: string) => string;
   requestAllDeliveries: (sessionId: string) => string[];
   updateDeliveryStatus: (sessionId: string, deliveryId: string, status: DeliveryRequest['status'], output?: string, txHash?: string) => void;
+
+  // Session cost tracking
+  sessionCost: number;
+  addSessionCost: (amount: number) => void;
+  resetSessionCost: () => void;
+
+  // Onboarding
+  onboardingStep: number | null;
+  onboardingComplete: boolean;
+  startOnboarding: () => void;
+  nextOnboardingStep: () => void;
+  skipOnboarding: () => void;
+
+  // Hydration
+  loadSessionFromApi: (sessionId: string) => Promise<void>;
+  loadSessionsFromApi: () => Promise<void>;
 }
 
 // Initial agents
@@ -194,7 +227,7 @@ const initialAgents: Agent[] = [
   { id: 'ux-analyst', name: 'UX Analyst', role: 'Research & Flows', description: 'User research & journeys', pricing: '$0.03-0.08', status: 'idle', avatar: 'UX', color: '#ec4899', balance: 100 },
   { id: 'ui-designer', name: 'UI Designer', role: 'Visual Design', description: 'Interfaces & design systems', pricing: '$0.04-0.10', status: 'idle', avatar: 'UI', color: '#f59e0b', balance: 100 },
   { id: 'ui-developer', name: 'FE Developer', role: 'React/Next.js', description: 'Frontend components & apps', pricing: '$0.05-0.12', status: 'idle', avatar: 'FE', color: '#10b981', balance: 100 },
-  { id: 'backend-developer', name: 'Backend Dev', role: 'APIs & Services', description: 'APIs, databases & services', pricing: '$0.05-0.12', status: 'idle', avatar: 'BE', color: '#3b82f6', balance: 100 },
+  { id: 'backend-developer', name: 'Integration Dev', role: 'APIs & Serverless', description: 'API integration & data fetching', pricing: '$0.05-0.12', status: 'idle', avatar: 'ID', color: '#3b82f6', balance: 100 },
   { id: 'solidity-developer', name: 'Solidity Dev', role: 'Smart Contracts', description: 'EVM contracts & protocols', pricing: '$0.08-0.20', status: 'idle', avatar: 'SC', color: '#6366f1', balance: 100 },
   { id: 'solidity-auditor', name: 'Security Auditor', role: 'Contract Audits', description: 'Security reviews & audits', pricing: '$0.10-0.25', status: 'idle', avatar: 'SA', color: '#ef4444', balance: 100 },
   { id: 'infrastructure', name: 'Infrastructure', role: 'DevOps & Cloud', description: 'CI/CD & cloud deployment', pricing: '$0.04-0.10', status: 'idle', avatar: 'IN', color: '#64748b', balance: 100 },
@@ -237,26 +270,47 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
   chatMessages: [],
   isAgentTyping: false,
   currentAgentTyping: null,
-  addChatMessage: (message) =>
-    set((state) => ({
-      chatMessages: [
-        ...state.chatMessages,
-        { ...message, id: nanoid(), timestamp: Date.now() },
-      ],
-    })),
+  addChatMessage: (message) => {
+    const id = nanoid();
+    const timestamp = Date.now();
+    set((state) => {
+      // Persist to session if active
+      const sessionId = state.activeSession?.id;
+      if (sessionId) {
+        syncToApi(`/api/sessions/${sessionId}/messages`, {
+          role: message.role,
+          agentId: message.agentId,
+          content: message.content,
+          isQuestion: message.isQuestion,
+          options: message.options,
+        });
+      }
+      return {
+        chatMessages: [
+          ...state.chatMessages,
+          { ...message, id, timestamp },
+        ],
+      };
+    });
+  },
   setAgentTyping: (agentId) =>
     set({ isAgentTyping: !!agentId, currentAgentTyping: agentId }),
   clearChat: () => set({ chatMessages: [] }),
 
   // Deliverables
   deliverables: [],
-  addDeliverable: (deliverable) =>
+  addDeliverable: (deliverable) => {
+    const id = nanoid();
+    const createdAt = Date.now();
     set((state) => ({
       deliverables: [
-        { ...deliverable, id: nanoid(), createdAt: Date.now() },
+        { ...deliverable, id, createdAt },
         ...state.deliverables,
       ],
-    })),
+    }));
+    // Persist
+    syncToApi('/api/deliverables', { ...deliverable, id, createdAt });
+  },
 
   // Project
   currentProject: null,
@@ -405,9 +459,11 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
       sessions: [session, ...state.sessions],
       activeSession: session,
     }));
+    // Persist
+    syncToApi('/api/sessions', { id, name, description });
     return id;
   },
-  updateSession: (id, updates) =>
+  updateSession: (id, updates) => {
     set((state) => ({
       sessions: state.sessions.map((s) =>
         s.id === id ? { ...s, ...updates, updatedAt: Date.now() } : s
@@ -415,7 +471,10 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
       activeSession: state.activeSession?.id === id
         ? { ...state.activeSession, ...updates, updatedAt: Date.now() }
         : state.activeSession,
-    })),
+    }));
+    // Persist
+    patchApi(`/api/sessions/${id}`, updates);
+  },
   addAgentToSession: (sessionId, agentId) =>
     set((state) => ({
       sessions: state.sessions.map((s) =>
@@ -521,4 +580,80 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
           }
         : state.activeSession,
     })),
+
+  // Session cost tracking
+  sessionCost: 0,
+  addSessionCost: (amount) =>
+    set((state) => ({ sessionCost: state.sessionCost + amount })),
+  resetSessionCost: () => set({ sessionCost: 0 }),
+
+  // Onboarding
+  onboardingStep: null,
+  onboardingComplete: typeof window !== 'undefined'
+    ? localStorage.getItem('agentverse-onboarding-complete') === 'true'
+    : false,
+  startOnboarding: () => set({ onboardingStep: 0 }),
+  nextOnboardingStep: () =>
+    set((state) => {
+      const next = (state.onboardingStep ?? 0) + 1;
+      if (next >= 6) {
+        // Completed all steps
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('agentverse-onboarding-complete', 'true');
+        }
+        return { onboardingStep: null, onboardingComplete: true };
+      }
+      return { onboardingStep: next };
+    }),
+  skipOnboarding: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('agentverse-onboarding-complete', 'true');
+    }
+    return set({ onboardingStep: null, onboardingComplete: true });
+  },
+
+  // Hydration from persistence API
+  loadSessionFromApi: async (sessionId) => {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`);
+      const data = await res.json();
+      if (data.success && data.session) {
+        const session: Session = {
+          id: data.session.id,
+          name: data.session.name,
+          description: data.session.description,
+          status: data.session.status,
+          involvedAgents: data.session.involvedAgents,
+          context: data.session.context,
+          deliveryRequests: data.session.deliveryRequests ?? [],
+          createdAt: data.session.createdAt,
+          updatedAt: data.session.updatedAt,
+        };
+        set((state) => ({
+          sessions: state.sessions.some((s) => s.id === session.id)
+            ? state.sessions.map((s) => (s.id === session.id ? session : s))
+            : [session, ...state.sessions],
+          activeSession: session,
+          chatMessages: data.session.messages?.map((m: { id: string; role: string; agentId?: string; content: string; timestamp: number; isQuestion?: boolean; options?: string[] }) => ({
+            id: m.id,
+            role: m.role,
+            agentId: m.agentId,
+            content: m.content,
+            timestamp: m.timestamp,
+            isQuestion: m.isQuestion,
+            options: m.options,
+          })) ?? state.chatMessages,
+        }));
+      }
+    } catch {}
+  },
+  loadSessionsFromApi: async () => {
+    try {
+      const res = await fetch('/api/sessions?limit=20');
+      const data = await res.json();
+      if (data.success && data.sessions) {
+        set({ sessions: data.sessions });
+      }
+    } catch {}
+  },
 }));
