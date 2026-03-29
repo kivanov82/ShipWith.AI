@@ -9,7 +9,8 @@
     "./types": "./src/types.ts",
     "./events": "./src/events.ts",
     "./memory": "./src/memory.ts",
-    "./project-store": "./src/project-store.ts"
+    "./project-store": "./src/project-store.ts",
+    "./firestore-store": "./src/firestore-store.ts"
   },
   "scripts": {
     "build": "tsc",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 // Free tier limits
 const LIMITS = {
@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'sessionToken required' }, { status: 400 });
   }
 
-  const store = getProjectStore();
-  const usage = store.getOrCreateUsage(sessionToken, walletAddress ?? undefined);
+  const store = getFirestoreStore();
+  const usage = await store.getOrCreateUsage(sessionToken, walletAddress ?? undefined);
 
   const tier = hasFunds ? 'funded' : walletAddress ? 'connected' : 'anonymous';
   const limit = LIMITS[tier];
@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'sessionToken required' }, { status: 400 });
   }
 
-  const store = getProjectStore();
-  const usage = store.getOrCreateUsage(sessionToken, walletAddress);
-  const newCount = store.incrementChatCount(usage.id);
+  const store = getFirestoreStore();
+  const usage = await store.getOrCreateUsage(sessionToken, walletAddress);
+  const newCount = await store.incrementChatCount(usage.id);
 
   const tier = hasFunds ? 'funded' : walletAddress ? 'connected' : 'anonymous';
   const limit = LIMITS[tier];

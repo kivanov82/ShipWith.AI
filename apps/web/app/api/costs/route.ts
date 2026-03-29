@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const store = getProjectStore();
+  const store = getFirestoreStore();
 
-  const summary = store.getCostSummary({
+  const summary = await store.getCostSummary({
     sessionId: searchParams.get('sessionId') ?? undefined,
     agentId: searchParams.get('agentId') ?? undefined,
   });
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const store = getProjectStore();
-  const cost = store.saveInvocationCost({
+  const store = getFirestoreStore();
+  const cost = await store.saveInvocationCost({
     sessionId,
     agentId,
     model,

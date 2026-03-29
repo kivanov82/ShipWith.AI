@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -12,11 +12,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const store = getProjectStore();
+  const store = getFirestoreStore();
 
   // Update delivery request status
-  store.updateDeliveryRequestStatus(
+  await store.updateDeliveryRequestStatus(
     deliveryId,
+    sessionId,
     txHash ? 'paid' : 'in-progress',
     txHash,
   );

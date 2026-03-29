@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { sessionId: string } }
 ) {
-  const store = getProjectStore();
-  const session = store.getSession(params.sessionId);
+  const store = getFirestoreStore();
+  const session = await store.getSession(params.sessionId);
 
   if (!session) {
     return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
   }
 
-  const messages = store.getChatMessages(params.sessionId);
-  const deliveryRequests = store.getDeliveryRequests(params.sessionId);
+  const messages = await store.getChatMessages(params.sessionId);
+  const deliveryRequests = await store.getDeliveryRequests(params.sessionId);
 
   return NextResponse.json({
     success: true,
@@ -26,24 +26,24 @@ export async function PATCH(
   { params }: { params: { sessionId: string } }
 ) {
   const body = await request.json();
-  const store = getProjectStore();
+  const store = getFirestoreStore();
 
-  const existing = store.getSession(params.sessionId);
+  const existing = await store.getSession(params.sessionId);
   if (!existing) {
     return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 });
   }
 
   if (body.status) {
-    store.updateSessionStatus(params.sessionId, body.status);
+    await store.updateSessionStatus(params.sessionId, body.status);
   }
   if (body.involvedAgents) {
-    store.updateSessionAgents(params.sessionId, body.involvedAgents);
+    await store.updateSessionAgents(params.sessionId, body.involvedAgents);
   }
   if (body.context) {
-    store.updateSessionContext(params.sessionId, body.context);
+    await store.updateSessionContext(params.sessionId, body.context);
   }
 
-  const updated = store.getSession(params.sessionId);
+  const updated = await store.getSession(params.sessionId);
   return NextResponse.json({ success: true, session: updated });
 }
 
@@ -51,8 +51,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { sessionId: string } }
 ) {
-  const store = getProjectStore();
+  const store = getFirestoreStore();
   // Mark as completed rather than actually deleting
-  store.updateSessionStatus(params.sessionId, 'completed');
+  await store.updateSessionStatus(params.sessionId, 'completed');
   return NextResponse.json({ success: true });
 }

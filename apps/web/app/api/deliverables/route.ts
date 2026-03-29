@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function GET(request: NextRequest) {
-  const store = getProjectStore();
+  const store = getFirestoreStore();
   const { searchParams } = request.nextUrl;
 
-  const deliverables = store.getDeliverables({
+  const deliverables = await store.getDeliverables({
     sessionId: searchParams.get('sessionId') ?? undefined,
     projectId: searchParams.get('projectId') ?? undefined,
     type: searchParams.get('type') ?? undefined,
@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'type, title, and producedBy required' }, { status: 400 });
   }
 
-  const store = getProjectStore();
+  const store = getFirestoreStore();
 
-  const deliverable = store.saveDeliverable({
+  const deliverable = await store.saveDeliverable({
     type,
     title,
     description,
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   // If content is provided, store it and set download URL
   if (content) {
-    store.saveDeliverableContent({
+    await store.saveDeliverableContent({
       deliverableId: deliverable.id,
       content,
       contentType: contentType ?? 'text/plain',
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Update deliverable with download URL
     deliverable.downloadUrl = `/api/deliverables/${deliverable.id}/download`;
-    store.saveDeliverable({ ...deliverable });
+    await store.saveDeliverable({ ...deliverable });
   }
 
   return NextResponse.json({ success: true, deliverable });

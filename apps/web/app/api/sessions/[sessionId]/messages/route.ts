@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { sessionId: string } }
 ) {
-  const store = getProjectStore();
+  const store = getFirestoreStore();
   const { searchParams } = request.nextUrl;
 
-  const messages = store.getChatMessages(params.sessionId, {
+  const messages = await store.getChatMessages(params.sessionId, {
     limit: searchParams.has('limit') ? Number(searchParams.get('limit')) : undefined,
     since: searchParams.has('since') ? Number(searchParams.get('since')) : undefined,
   });
@@ -27,8 +27,8 @@ export async function POST(
     return NextResponse.json({ success: false, error: 'role and content required' }, { status: 400 });
   }
 
-  const store = getProjectStore();
-  const message = store.saveChatMessage({
+  const store = getFirestoreStore();
+  const message = await store.saveChatMessage({
     sessionId: params.sessionId,
     role,
     agentId,

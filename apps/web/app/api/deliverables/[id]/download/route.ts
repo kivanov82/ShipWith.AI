@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const store = getProjectStore();
-  const content = store.getDeliverableContent(params.id);
+  const store = getFirestoreStore();
+  const content = await store.getDeliverableContent(params.id);
 
   if (!content) {
     return NextResponse.json({ success: false, error: 'Deliverable content not found' }, { status: 404 });

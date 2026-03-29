@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getProjectStore } from '@agentverse/core/project-store';
+import { getFirestoreStore } from '@agentverse/core/firestore-store';
 
 export async function GET(request: NextRequest) {
-  const store = getProjectStore();
+  const store = getFirestoreStore();
   const { searchParams } = request.nextUrl;
 
-  const sessions = store.listSessions({
+  const sessions = await store.listSessions({
     projectId: searchParams.get('projectId') ?? undefined,
     status: searchParams.get('status') ?? undefined,
     limit: searchParams.has('limit') ? Number(searchParams.get('limit')) : undefined,
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'id and name required' }, { status: 400 });
   }
 
-  const store = getProjectStore();
-  const session = store.saveSession({
+  const store = getFirestoreStore();
+  const session = await store.saveSession({
     id,
     name,
     description,
