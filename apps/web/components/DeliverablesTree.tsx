@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore, Deliverable } from '@/lib/store';
+import { useShipWithAIStore, Deliverable } from '@/lib/store';
 import {
   ChevronDown,
   ChevronRight,
@@ -32,7 +32,7 @@ interface AgentGroup {
 }
 
 export function DeliverablesTree() {
-  const { deliverables, agents } = useAgentverseStore();
+  const { deliverables, agents } = useShipWithAIStore();
   const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set());
   const [expandedDeliverables, setExpandedDeliverables] = useState<Set<string>>(new Set());
 

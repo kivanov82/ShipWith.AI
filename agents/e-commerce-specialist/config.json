@@ -1,6 +1,6 @@
 {
   "id": "e-commerce-specialist",
-  "name": "Agentverse: E-commerce Specialist",
+  "name": "ShipWith.AI: E-commerce Specialist",
   "description": "E-commerce setup specialist. Configures online stores with product catalogs, inventory management, shipping, and store optimization for maximum conversions.",
   "capabilities": [
     "shopify-setup",

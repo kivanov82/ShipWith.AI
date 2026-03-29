@@ -131,7 +131,7 @@ export interface DeliveryRequest {
 }
 
 // Store state
-interface AgentverseState {
+interface ShipWithAIState {
   // Agents
   agents: Agent[];
   selectedAgent: string | null;
@@ -162,7 +162,7 @@ interface AgentverseState {
     name: string;
     status: 'idle' | 'planning' | 'active' | 'review' | 'completed';
   } | null;
-  setCurrentProject: (project: AgentverseState['currentProject']) => void;
+  setCurrentProject: (project: ShipWithAIState['currentProject']) => void;
 
   // Project History
   projects: Project[];
@@ -220,7 +220,7 @@ interface AgentverseState {
   // Use case flow
   activeUseCase: UseCaseId | null;
   useCaseAnswers: Record<string, string | string[] | null>;
-  githubMode: 'own' | 'agentverse' | null;
+  githubMode: 'own' | 'shipwithai' | null;
   repoUrl: string | null;
   setActiveUseCase: (uc: UseCaseId | null) => void;
   setUseCaseAnswers: (answers: Record<string, string | string[] | null>) => void;
@@ -252,7 +252,7 @@ const initialAgents: Agent[] = [
   { id: 'e-commerce-specialist', name: 'E-commerce Specialist', role: 'Store Setup', description: 'Shopify, catalogs & shipping', pricing: '$0.04-0.10', status: 'idle', avatar: 'EC', color: '#fb923c', balance: 100 },
 ];
 
-export const useAgentverseStore = create<AgentverseState>((set, get) => ({
+export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
   // Agents
   agents: initialAgents,
   selectedAgent: null,
@@ -601,7 +601,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
   // Onboarding
   onboardingStep: null,
   onboardingComplete: typeof window !== 'undefined'
-    ? localStorage.getItem('agentverse-onboarding-complete') === 'true'
+    ? localStorage.getItem('shipwithai-onboarding-complete') === 'true'
     : false,
   startOnboarding: () => set({ onboardingStep: 0 }),
   nextOnboardingStep: () =>
@@ -610,7 +610,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
       if (next >= 6) {
         // Completed all steps
         if (typeof window !== 'undefined') {
-          localStorage.setItem('agentverse-onboarding-complete', 'true');
+          localStorage.setItem('shipwithai-onboarding-complete', 'true');
         }
         return { onboardingStep: null, onboardingComplete: true };
       }
@@ -618,7 +618,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
     }),
   skipOnboarding: () => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('agentverse-onboarding-complete', 'true');
+      localStorage.setItem('shipwithai-onboarding-complete', 'true');
     }
     return set({ onboardingStep: null, onboardingComplete: true });
   },
@@ -637,7 +637,7 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
     const projectId = nanoid();
     const sessionId = nanoid();
     const brief = config.pmBriefTemplate(answers);
-    const githubMode = (answers.github as string) === 'own' ? 'own' : 'agentverse';
+    const githubMode = (answers.github as string) === 'own' ? 'own' : 'shipwithai';
 
     const project: Project = {
       id: projectId,

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import {
   Play,
   Pause,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 export function ProjectHeader() {
-  const { currentProject, agents, setCurrentProject } = useAgentverseStore();
+  const { currentProject, agents, setCurrentProject } = useShipWithAIStore();
   const [showNewProject, setShowNewProject] = useState(false);
   const [projectPrompt, setProjectPrompt] = useState('');
 

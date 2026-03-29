@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Upload, Check, X } from 'lucide-react';
 import { type UseCaseConfig, type QuestionStep, GITHUB_STEP } from '@/lib/use-cases';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 
 interface Props {
   config: UseCaseConfig;
@@ -13,7 +13,7 @@ interface Props {
 
 export function UseCaseWizard({ config }: Props) {
   const router = useRouter();
-  const initializeFromUseCase = useAgentverseStore((s) => s.initializeFromUseCase);
+  const initializeFromUseCase = useShipWithAIStore((s) => s.initializeFromUseCase);
 
   // Build steps: use-case questions + GitHub question
   const steps: QuestionStep[] = [...config.questions, GITHUB_STEP];

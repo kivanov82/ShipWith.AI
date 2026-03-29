@@ -1,5 +1,5 @@
 {
-  "name": "@agentverse/x402",
+  "name": "@shipwithai/x402",
   "version": "0.1.0",
   "private": true,
   "main": "./dist/index.js",
@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "viem": "^2.7.0",
-    "@agentverse/core": "workspace:*"
+    "@shipwithai/core": "workspace:*"
   }
 }

@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 /**
- * Register all Agentverse agents with ERC-8004
+ * Register all ShipWith.AI agents with ERC-8004
  * Usage: pnpm register-agents [--dry-run] [--agent <id>]
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { AgentConfig } from '@agentverse/core';
+import type { AgentConfig } from '@shipwithai/core';
 
 // ERC-8004 Metadata format
 interface ERC8004Metadata {
@@ -28,11 +28,11 @@ const specificAgent = args.includes('--agent')
   ? args[args.indexOf('--agent') + 1]
   : null;
 
-const BASE_URL = process.env.AGENTVERSE_BASE_URL || 'https://agentverse.example.com';
+const BASE_URL = process.env.SHIPWITHAI_BASE_URL || 'https://shipwith.ai';
 const PRIVATE_KEY = process.env.REGISTRATION_PRIVATE_KEY as `0x${string}` | undefined;
 
 async function main() {
-  console.log('🔐 Agentverse ERC-8004 Registration\n');
+  console.log('🔐 ShipWith.AI ERC-8004 Registration\n');
 
   if (!PRIVATE_KEY && !dryRun) {
     console.error('Error: REGISTRATION_PRIVATE_KEY environment variable required');

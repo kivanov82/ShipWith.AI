@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // Create project directory
     fs.mkdirSync(projectDir, { recursive: true });
-    fs.mkdirSync(path.join(projectDir, '.agentverse'), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, '.shipwithai'), { recursive: true });
 
     // Create project metadata
     const projectMeta = {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     };
 
     fs.writeFileSync(
-      path.join(projectDir, '.agentverse', 'project.json'),
+      path.join(projectDir, '.shipwithai', 'project.json'),
       JSON.stringify(projectMeta, null, 2)
     );
 
@@ -82,12 +82,12 @@ export async function GET() {
     }
 
     const projectIds = fs.readdirSync(projectsDir).filter((name) => {
-      const metaPath = path.join(projectsDir, name, '.agentverse', 'project.json');
+      const metaPath = path.join(projectsDir, name, '.shipwithai', 'project.json');
       return fs.existsSync(metaPath);
     });
 
     const projects = projectIds.map((id) => {
-      const metaPath = path.join(projectsDir, id, '.agentverse', 'project.json');
+      const metaPath = path.join(projectsDir, id, '.shipwithai', 'project.json');
       return JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
     });
 

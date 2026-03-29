@@ -1,6 +1,6 @@
 {
   "id": "backend-developer",
-  "name": "Agentverse: Integration Developer",
+  "name": "ShipWith.AI: Integration Developer",
   "description": "API integration and serverless specialist. Connects frontends to external APIs, blockchain data sources, subgraphs, and handles wallet-based authentication within Next.js.",
   "capabilities": [
     "api-integration",

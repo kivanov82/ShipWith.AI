@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 
 const statusColors = {
   idle: 'bg-gray-600',
@@ -12,7 +12,7 @@ const statusColors = {
 };
 
 export function SimpleAgentGrid() {
-  const { agents, selectedAgent, setSelectedAgent } = useAgentverseStore();
+  const { agents, selectedAgent, setSelectedAgent } = useShipWithAIStore();
 
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">

@@ -1,7 +1,7 @@
 {
   "$schema": "../agent-config.schema.json",
   "id": "{{AGENT_ID}}",
-  "name": "Agentverse: {{DISPLAY_NAME}}",
+  "name": "ShipWith.AI: {{DISPLAY_NAME}}",
   "description": "{{DESCRIPTION}}",
   "capabilities": [],
   "pricing": {

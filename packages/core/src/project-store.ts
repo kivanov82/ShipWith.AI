@@ -189,7 +189,7 @@ export interface StoredInvocationCost {
 export class ProjectStore {
   private db: Database.Database;
 
-  constructor(dbPath: string = './data/agentverse.db') {
+  constructor(dbPath: string = './data/shipwithai.db') {
     this.db = new Database(dbPath);
     this.db.pragma('journal_mode = WAL');
     this.init();

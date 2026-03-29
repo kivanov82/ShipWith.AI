@@ -1,8 +1,8 @@
-# Agentverse Bootstrap Project
+# ShipWith.AI Bootstrap Project
 
 ## Overview
 
-This is a meta-project where Agentverse agents are building and improving Agentverse itself. The goal is to dogfood our own system - using our agents to develop, test, and enhance the platform.
+This is a meta-project where ShipWith.AI agents are building and improving ShipWith.AI itself. The goal is to dogfood our own system - using our agents to develop, test, and enhance the platform.
 
 ## Current State
 

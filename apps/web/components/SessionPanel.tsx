@@ -14,7 +14,7 @@ import {
   AlertCircle,
   DollarSign
 } from 'lucide-react';
-import { useAgentverseStore, Session, DeliveryRequest } from '@/lib/store';
+import { useShipWithAIStore, Session, DeliveryRequest } from '@/lib/store';
 
 interface SessionPanelProps {
   onRequestDelivery: (sessionId: string, agentId?: string) => void;
@@ -28,7 +28,7 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
     createSession,
     setActiveSession,
     updateSession,
-  } = useAgentverseStore();
+  } = useShipWithAIStore();
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);

@@ -1,8 +1,8 @@
-# Agentverse Global Context
+# ShipWith.AI Global Context
 
-## What is Agentverse?
+## What is ShipWith.AI?
 
-Agentverse is a connected network of AI agents that work together as a decentralized Web3 software development company. Each agent specializes in a specific domain and can be invoked independently or as part of a coordinated project pipeline.
+ShipWith.AI is a connected network of AI agents that work together as a decentralized Web3 software development company. Each agent specializes in a specific domain and can be invoked independently or as part of a coordinated project pipeline.
 
 ## Core Principles
 
@@ -33,14 +33,14 @@ The dashboard (`apps/web/`) includes:
 - **AgentDetailModal**: Full agent metadata on click
 - **DeliverablesTree**: Collapsible tree grouped by producing agent
 - **ProjectSummary**: Live stats (duration, budget, interactions)
-- **Logo**: Minimalist Agentverse branding
+- **Logo**: Minimalist ShipWith.AI branding
 
 ## Project Structure Standards
 
 All projects should follow this structure:
 ```
 project-name/
-├── .agentverse/          # Agentverse metadata
+├── .shipwithai/          # ShipWith.AI metadata
 │   ├── project.json      # Project config
 │   └── tasks.json        # Task tracking
 ├── src/                  # Source code

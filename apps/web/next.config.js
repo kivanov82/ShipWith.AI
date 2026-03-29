@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@agentverse/core', '@agentverse/x402'],
+  transpilePackages: ['@shipwithai/core', '@shipwithai/x402'],
   output: 'standalone',
   webpack: (config) => {
     // Stub out React Native modules pulled in by MetaMask SDK

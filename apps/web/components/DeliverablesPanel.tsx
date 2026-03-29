@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore, type Deliverable } from '@/lib/store';
+import { useShipWithAIStore, type Deliverable } from '@/lib/store';
 import {
   FileText,
   Code,
@@ -33,7 +33,7 @@ function formatDate(timestamp: number) {
 }
 
 export function DeliverablesPanel() {
-  const { deliverables, agents } = useAgentverseStore();
+  const { deliverables, agents } = useShipWithAIStore();
 
   const getAgentInfo = (id: string) => agents.find((a) => a.id === id);
 

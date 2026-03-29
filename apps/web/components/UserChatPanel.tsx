@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot } from 'lucide-react';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 
 export function UserChatPanel() {
   const {
@@ -12,7 +12,7 @@ export function UserChatPanel() {
     isAgentTyping,
     currentAgentTyping,
     agents,
-  } = useAgentverseStore();
+  } = useShipWithAIStore();
 
   const [input, setInput] = useState('');
 

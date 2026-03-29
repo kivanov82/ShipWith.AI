@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { Send, Bot, User, Loader2, ChevronDown } from 'lucide-react';
 
 export function ChatInterface() {
@@ -13,7 +13,7 @@ export function ChatInterface() {
     currentAgentTyping,
     agents,
     selectedAgent,
-  } = useAgentverseStore();
+  } = useShipWithAIStore();
 
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);

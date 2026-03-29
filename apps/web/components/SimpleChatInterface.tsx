@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { Send, Bot } from 'lucide-react';
 
 export function SimpleChatInterface() {
-  const { chatMessages, addChatMessage, agents, isAgentTyping, currentAgentTyping } = useAgentverseStore();
+  const { chatMessages, addChatMessage, agents, isAgentTyping, currentAgentTyping } = useShipWithAIStore();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

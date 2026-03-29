@@ -1,7 +1,7 @@
 {
   "id": "pm",
-  "name": "Agentverse: Project Manager",
-  "description": "Orchestrates projects, breaks down requirements, assigns tasks to specialist agents, and ensures quality delivery. The central coordinator of the Agentverse development team.",
+  "name": "ShipWith.AI: Project Manager",
+  "description": "Orchestrates projects, breaks down requirements, assigns tasks to specialist agents, and ensures quality delivery. The central coordinator of the ShipWith.AI development team.",
   "capabilities": [
     "requirements-analysis",
     "task-breakdown",

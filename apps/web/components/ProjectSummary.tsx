@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { Clock, DollarSign, ArrowLeftRight, Package, Users } from 'lucide-react';
 
 function formatDuration(ms: number): string {
@@ -16,7 +16,7 @@ function formatDuration(ms: number): string {
 }
 
 export function ProjectSummary() {
-  const { projectStats, deliverables, agents, currentProject } = useAgentverseStore();
+  const { projectStats, deliverables, agents, currentProject } = useShipWithAIStore();
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {

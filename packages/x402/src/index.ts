@@ -1,4 +1,4 @@
-// x402 Payment Integration for Agentverse
+// x402 Payment Integration for ShipWith.AI
 // Uses Base testnet for development
 
 import {
@@ -13,12 +13,12 @@ import {
 } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import type { AgentId, Payment } from '@agentverse/core';
+import type { AgentId, Payment } from '@shipwithai/core';
 import { nanoid } from 'nanoid';
 
 // Configuration
-const NETWORK = process.env.AGENTVERSE_NETWORK === 'mainnet' ? base : baseSepolia;
-const RPC_URL = process.env.AGENTVERSE_RPC_URL || 'https://sepolia.base.org';
+const NETWORK = process.env.SHIPWITHAI_NETWORK === 'mainnet' ? base : baseSepolia;
+const RPC_URL = process.env.SHIPWITHAI_RPC_URL || 'https://sepolia.base.org';
 
 // USDC addresses
 const USDC_ADDRESS: Record<number, Address> = {

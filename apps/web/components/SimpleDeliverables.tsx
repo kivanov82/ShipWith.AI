@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { FileText, Code, Globe, FileCheck, Palette, Download, ExternalLink } from 'lucide-react';
 
 const typeConfig = {
@@ -13,7 +13,7 @@ const typeConfig = {
 };
 
 export function SimpleDeliverables() {
-  const { deliverables, agents } = useAgentverseStore();
+  const { deliverables, agents } = useShipWithAIStore();
 
   const getAgent = (id: string) => agents.find((a) => a.id === id);
 

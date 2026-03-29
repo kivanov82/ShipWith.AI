@@ -1,4 +1,4 @@
-// Core types for Agentverse
+// Core types for ShipWith.AI
 
 export type AgentId =
   | 'pm'
@@ -16,7 +16,7 @@ export type AgentId =
 
 export interface AgentConfig {
   id: AgentId;
-  name: string;                    // e.g., "Agentverse: FE Developer"
+  name: string;                    // e.g., "ShipWith.AI: FE Developer"
   description: string;
   capabilities: string[];
   pricing: AgentPricing;

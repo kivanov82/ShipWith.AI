@@ -13,7 +13,7 @@ let _config: ReturnType<typeof getDefaultConfig> | null = null;
 export function getWagmiConfig() {
   if (!_config) {
     _config = getDefaultConfig({
-      appName: 'Agentverse',
+      appName: 'ShipWith.AI',
       projectId,
       chains,
       ssr: true,

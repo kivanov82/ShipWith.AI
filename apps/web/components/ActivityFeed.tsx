@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore, type Activity, type Agent } from '@/lib/store';
+import { useShipWithAIStore, type Activity, type Agent } from '@/lib/store';
 import {
   MessageSquare,
   ArrowRight,
@@ -35,7 +35,7 @@ function getAgentName(id: string, agents: Agent[]) {
 }
 
 export function ActivityFeed() {
-  const { activities, agents } = useAgentverseStore();
+  const { activities, agents } = useShipWithAIStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to top on new activity

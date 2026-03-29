@@ -1,6 +1,6 @@
 {
   "id": "solidity-auditor",
-  "name": "Agentverse: Solidity Auditor",
+  "name": "ShipWith.AI: Solidity Auditor",
   "description": "Smart contract security specialist performing audits, identifying vulnerabilities, and recommending fixes. Expert in common attack vectors and security best practices.",
   "capabilities": [
     "security-audit",

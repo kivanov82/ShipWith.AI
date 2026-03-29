@@ -42,7 +42,7 @@ temp/
 # Project artifacts (keep structure, ignore contents)
 projects/*/src/
 projects/*/dist/
-!projects/*/.agentverse/
+!projects/*/.shipwithai/
 
 # Keep these
 !.gitkeep

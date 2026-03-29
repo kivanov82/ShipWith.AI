@@ -11,7 +11,7 @@ import {
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import type { AgentId, AgentConfig } from '@agentverse/core';
+import type { AgentId, AgentConfig } from '@shipwithai/core';
 
 // ERC-8004 Contract on Ethereum Mainnet
 const ERC8004_ADDRESS: Address = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
@@ -51,7 +51,7 @@ export class ERC8004Registry {
     });
   }
 
-  // Generate metadata for an Agentverse agent
+  // Generate metadata for an ShipWith.AI agent
   generateMetadata(config: AgentConfig, baseUrl?: string): ERC8004Metadata {
     const services: ERC8004Service[] = [];
 

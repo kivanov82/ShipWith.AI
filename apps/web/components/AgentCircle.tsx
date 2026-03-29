@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore, Agent } from '@/lib/store';
+import { useShipWithAIStore, Agent } from '@/lib/store';
 import { USE_CASES } from '@/lib/use-cases';
 import { AgentCard } from './AgentCard';
 import { SpeechBubble, getBubblePosition } from './SpeechBubble';
@@ -69,7 +69,7 @@ function ConnectionLine({ from, to, type }: { from: AgentPosition; to: AgentPosi
 }
 
 export function AgentCircle() {
-  const { agents, activities, activeConnections, chatMessages, activeSession, createSession } = useAgentverseStore();
+  const { agents, activities, activeConnections, chatMessages, activeSession, createSession } = useShipWithAIStore();
   const [detailAgent, setDetailAgent] = useState<Agent | null>(null);
   const [chatAgent, setChatAgent] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<'chat' | 'job'>('chat');
@@ -116,7 +116,7 @@ export function AgentCircle() {
     }
   }, [agents, chatAgent]);
 
-  const activeUseCase = useAgentverseStore((s) => s.activeUseCase);
+  const activeUseCase = useShipWithAIStore((s) => s.activeUseCase);
 
   // When a use case is active, only show its agents (distributed across 2-3 rings)
   const agentGroups = useMemo(() => {

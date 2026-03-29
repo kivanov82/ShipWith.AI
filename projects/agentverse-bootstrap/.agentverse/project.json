@@ -1,7 +1,7 @@
 {
-  "id": "agentverse-bootstrap",
-  "name": "Agentverse Self-Build",
-  "description": "Meta-project where Agentverse agents are building and improving Agentverse itself",
+  "id": "shipwithai-bootstrap",
+  "name": "ShipWith.AI Self-Build",
+  "description": "Meta-project where ShipWith.AI agents are building and improving ShipWith.AI itself",
   "status": "active",
   "tasks": [],
   "isBootstrap": true,

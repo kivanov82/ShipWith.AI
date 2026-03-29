@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { ArrowRight } from 'lucide-react';
 
 const typeEmoji: Record<string, string> = {
@@ -14,7 +14,7 @@ const typeEmoji: Record<string, string> = {
 };
 
 export function SimpleActivityFeed() {
-  const { activities, agents } = useAgentverseStore();
+  const { activities, agents } = useShipWithAIStore();
 
   const getAgentName = (id: string) => {
     const agent = agents.find((a) => a.id === id);

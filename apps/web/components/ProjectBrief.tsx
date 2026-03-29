@@ -1,14 +1,14 @@
 'use client';
 
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { USE_CASES } from '@/lib/use-cases';
 import { FileText, Github, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
 export function ProjectBrief() {
-  const activeUseCase = useAgentverseStore((s) => s.activeUseCase);
-  const useCaseAnswers = useAgentverseStore((s) => s.useCaseAnswers);
-  const githubMode = useAgentverseStore((s) => s.githubMode);
+  const activeUseCase = useShipWithAIStore((s) => s.activeUseCase);
+  const useCaseAnswers = useShipWithAIStore((s) => s.useCaseAnswers);
+  const githubMode = useShipWithAIStore((s) => s.githubMode);
   const [expanded, setExpanded] = useState(true);
 
   if (!activeUseCase) return null;
@@ -64,7 +64,7 @@ export function ProjectBrief() {
             <span className="text-[10px] text-zinc-600">
               {githubMode === 'own'
                 ? 'Repo on your GitHub'
-                : 'Repo hosted by Agentverse'}
+                : 'Repo hosted by ShipWith.AI'}
             </span>
           </div>
         </div>

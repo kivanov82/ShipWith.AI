@@ -1,6 +1,6 @@
 {
   "id": "unit-tester",
-  "name": "Agentverse: Unit Tester",
+  "name": "ShipWith.AI: Unit Tester",
   "description": "Unit testing specialist writing comprehensive test suites for code quality and reliability. Expert in Jest, Vitest, and smart contract testing.",
   "capabilities": [
     "unit-testing",

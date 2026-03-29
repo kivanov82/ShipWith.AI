@@ -1,4 +1,4 @@
-# Agentverse Best Practices
+# ShipWith.AI Best Practices
 
 ## General
 

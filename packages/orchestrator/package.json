@@ -1,5 +1,5 @@
 {
-  "name": "@agentverse/orchestrator",
+  "name": "@shipwithai/orchestrator",
   "version": "0.1.0",
   "private": true,
   "main": "./dist/index.js",
@@ -12,8 +12,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@agentverse/core": "workspace:*",
-    "@agentverse/x402": "workspace:*",
+    "@shipwithai/core": "workspace:*",
+    "@shipwithai/x402": "workspace:*",
     "nanoid": "^5.0.4"
   }
 }

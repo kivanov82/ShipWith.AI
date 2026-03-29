@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { X, ChevronRight, HelpCircle } from 'lucide-react';
 
 interface OnboardingStep {
@@ -15,7 +15,7 @@ interface OnboardingStep {
 const STEPS: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Agentverse',
+    title: 'Welcome to ShipWith.AI',
     content: 'A team of 12 AI agents ready to build your Web3 frontend app. Let\'s take a quick tour.',
     target: null,
     position: 'center',
@@ -58,7 +58,7 @@ const STEPS: OnboardingStep[] = [
 ];
 
 export function OnboardingOverlay() {
-  const { onboardingStep, onboardingComplete, nextOnboardingStep, skipOnboarding, activeUseCase } = useAgentverseStore();
+  const { onboardingStep, onboardingComplete, nextOnboardingStep, skipOnboarding, activeUseCase } = useShipWithAIStore();
 
   // Skip onboarding entirely when user came through the use-case wizard
   if (activeUseCase) return null;
@@ -192,7 +192,7 @@ export function OnboardingOverlay() {
 
 // Help button to re-trigger onboarding
 export function OnboardingHelpButton() {
-  const { startOnboarding, onboardingStep } = useAgentverseStore();
+  const { startOnboarding, onboardingStep } = useShipWithAIStore();
 
   if (onboardingStep !== null) return null;
 

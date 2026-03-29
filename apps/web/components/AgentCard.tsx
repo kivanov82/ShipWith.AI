@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { MessageSquare, CheckCircle, Clock, Loader2, Briefcase } from 'lucide-react';
-import { Agent, useAgentverseStore } from '@/lib/store';
+import { Agent, useShipWithAIStore } from '@/lib/store';
 
 interface AgentCardProps {
   agent: Agent;
@@ -14,7 +14,7 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, isSelected, onClick, onChatClick, onJobClick, showButtons = true }: AgentCardProps) {
-  const { deliverables } = useAgentverseStore();
+  const { deliverables } = useShipWithAIStore();
   const isActive = agent.status !== 'idle';
 
   // Check if agent has delivered work

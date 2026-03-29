@@ -1,10 +1,10 @@
 // Demo simulation: "Bean & Bloom Coffee" website build
-import { useAgentverseStore } from './store';
+import { useShipWithAIStore } from './store';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function runDemoSimulation() {
-  const store = useAgentverseStore.getState();
+  const store = useShipWithAIStore.getState();
 
   // Reset state
   store.clearActivities();

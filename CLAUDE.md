@@ -1,11 +1,11 @@
-# Agentverse
+# ShipWith.AI
 
 A connected network of AI agents working together as a decentralized Web3 software development company.
 
 ## Project Structure
 
 ```
-agentverse/
+shipwithai/
 ├── apps/web/              # Next.js 14 (App Router) dashboard
 │   ├── app/
 │   │   ├── api/           # REST API routes
@@ -98,7 +98,7 @@ Each agent is a specialized AI worker with:
 - **SQLite** (`packages/core/src/project-store.ts`) for local persistence
 - Stores sessions, messages, deliverables, delivery requests, usage, and costs
 - State managed client-side via **Zustand** (`apps/web/lib/store.ts`) with API sync
-- `data/agentverse.db` created at runtime (gitignored)
+- `data/shipwithai.db` created at runtime (gitignored)
 
 ### Events
 Agents communicate via an event bus:
@@ -135,4 +135,4 @@ When working on this project:
 
 ## Bootstrap Project
 
-Agentverse is building itself! Check `projects/agentverse-bootstrap/` for the meta-project where our agents are improving their own code.
+ShipWith.AI is building itself! Check `projects/shipwithai-bootstrap/` for the meta-project where our agents are improving their own code.

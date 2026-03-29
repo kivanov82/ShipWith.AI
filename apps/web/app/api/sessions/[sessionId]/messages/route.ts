@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirestoreStore } from '@agentverse/core/firestore-store';
+import { getFirestoreStore } from '@shipwithai/core/firestore-store';
 
 export async function GET(
   request: NextRequest,

@@ -15,7 +15,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAgentverseStore, type Agent } from '@/lib/store';
+import { useShipWithAIStore, type Agent } from '@/lib/store';
 import { AgentNode } from './AgentNode';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,7 +63,7 @@ const createEdges = (connections: Array<{ from: string; to: string; type: string
 };
 
 export function AgentFlow() {
-  const { agents, activeConnections } = useAgentverseStore();
+  const { agents, activeConnections } = useShipWithAIStore();
 
   const initialNodes = useMemo(() => createNodes(agents), []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);

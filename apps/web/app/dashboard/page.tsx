@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAgentverseStore } from '@/lib/store';
+import { useShipWithAIStore } from '@/lib/store';
 import { runDemoSimulation } from '@/lib/demo';
 import { Logo } from '@/components/Logo';
 import { AgentCircle } from '@/components/AgentCircle';
@@ -51,7 +51,7 @@ function Dashboard() {
     requestDelivery,
     agents,
     activeUseCase,
-  } = useAgentverseStore();
+  } = useShipWithAIStore();
 
   const isUseCaseMode = !!activeUseCase;
 

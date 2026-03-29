@@ -16,7 +16,7 @@ export const GITHUB_STEP: QuestionStep = {
   type: 'radio',
   options: [
     { label: 'Create a repository on my GitHub', value: 'own' },
-    { label: "I don't have GitHub — create one for me", value: 'agentverse' },
+    { label: "I don't have GitHub — create one for me", value: 'shipwithai' },
   ],
   required: true,
 };

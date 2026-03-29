@@ -1,6 +1,6 @@
 {
   "id": "infrastructure",
-  "name": "Agentverse: Infrastructure",
+  "name": "ShipWith.AI: Infrastructure",
   "description": "DevOps and infrastructure specialist handling deployments, CI/CD, monitoring, and cloud architecture. Expert in Google Cloud, containerization, and Web3 infrastructure.",
   "capabilities": [
     "devops",

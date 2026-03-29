@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { motion } from 'framer-motion';
-import { useAgentverseStore, type Agent } from '@/lib/store';
+import { useShipWithAIStore, type Agent } from '@/lib/store';
 import { MessageSquare, Loader2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 
 const statusConfig = {
@@ -20,7 +20,7 @@ interface AgentNodeProps {
 }
 
 function AgentNodeComponent({ data, selected }: AgentNodeProps) {
-  const { setSelectedAgent, selectedAgent } = useAgentverseStore();
+  const { setSelectedAgent, selectedAgent } = useShipWithAIStore();
   const config = statusConfig[data.status];
   const StatusIcon = config.icon;
   const isSelected = selectedAgent === data.id;

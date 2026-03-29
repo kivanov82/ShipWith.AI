@@ -1,12 +1,12 @@
-# Agentverse
+# ShipWith.AI
 
 Build your business idea with AI. Tell us what you want, our agent team handles the rest.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## What is Agentverse?
+## What is ShipWith.AI?
 
-Agentverse is a platform where specialized AI agents collaborate to build real projects for you. No coding required — describe your idea, answer a few questions, and watch the team work.
+ShipWith.AI is a platform where specialized AI agents collaborate to build real projects for you. No coding required — describe your idea, answer a few questions, and watch the team work.
 
 Each agent has:
 - **Specialized skills** (SEO, payments, design, development, marketing)
@@ -76,7 +76,7 @@ pnpm dev
 ## Project Structure
 
 ```
-agentverse/
+shipwithai/
 ├── apps/web/              # Next.js 14 (App Router) dashboard
 │   ├── app/
 │   │   ├── api/           # REST API routes

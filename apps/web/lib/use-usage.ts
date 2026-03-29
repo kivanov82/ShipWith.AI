@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const SESSION_TOKEN_KEY = 'agentverse-session-token';
+const SESSION_TOKEN_KEY = 'shipwithai-session-token';
 
 interface UsageState {
   chatCount: number;

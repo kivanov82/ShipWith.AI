@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Loader2, Zap } from 'lucide-react';
-import { useAgentverseStore, Agent } from '@/lib/store';
+import { useShipWithAIStore, Agent } from '@/lib/store';
 import { invokeAgent } from '@/lib/agent-client';
 
 interface AgentChatBubbleProps {
@@ -26,7 +26,7 @@ export function AgentChatBubble({ agent, mode, onClose }: AgentChatBubbleProps) 
     activeSession,
     addAgentToSession,
     updateSessionContext,
-  } = useAgentverseStore();
+  } = useShipWithAIStore();
   const [input, setInput] = useState('');
   const [isInvoking, setIsInvoking] = useState(false);
   const [streamingOutput, setStreamingOutput] = useState('');

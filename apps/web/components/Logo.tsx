@@ -53,7 +53,7 @@ export function Logo({ variant = 'icon', size = 32, className = '' }: LogoProps)
         className="font-semibold text-zinc-100"
         style={{ fontSize: `${textSize}px` }}
       >
-        Agentverse
+        ShipWith.AI
       </span>
     </div>
   );

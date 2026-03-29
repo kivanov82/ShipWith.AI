@@ -1,7 +1,7 @@
 // Orchestrator - Coordinates agent workflows
 import { nanoid } from 'nanoid';
-import type { Task, Project, AgentId, AgentEvent } from '@agentverse/core';
-import { getEventBus, events } from '@agentverse/core';
+import type { Task, Project, AgentId, AgentEvent } from '@shipwithai/core';
+import { getEventBus, events } from '@shipwithai/core';
 
 export interface WorkflowStep {
   id: string;

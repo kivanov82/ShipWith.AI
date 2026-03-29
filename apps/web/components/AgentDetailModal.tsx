@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Wallet, Globe, Star, Zap, MessageSquare } from 'lucide-react';
-import { Agent, useAgentverseStore } from '@/lib/store';
+import { Agent, useShipWithAIStore } from '@/lib/store';
 
 interface AgentDetailModalProps {
   agent: Agent | null;
@@ -26,7 +26,7 @@ const agentSkills: Record<string, string[]> = {
 };
 
 export function AgentDetailModal({ agent, onClose }: AgentDetailModalProps) {
-  const { activities, deliverables } = useAgentverseStore();
+  const { activities, deliverables } = useShipWithAIStore();
 
   if (!agent) return null;
 
@@ -116,7 +116,7 @@ export function AgentDetailModal({ agent, onClose }: AgentDetailModalProps) {
                   <Globe className="w-3.5 h-3.5 text-zinc-500" />
                   <span className="text-zinc-400">API:</span>
                   <code className="text-zinc-300 bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-[10px]">
-                    {agent.apiEndpoint || `api.agentverse.ai/${agent.id}`}
+                    {agent.apiEndpoint || `api.shipwith.ai/${agent.id}`}
                   </code>
                 </div>
                 <div className="flex items-center gap-2 text-xs">

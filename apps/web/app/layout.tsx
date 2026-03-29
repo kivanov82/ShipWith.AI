@@ -3,7 +3,7 @@ import { Providers } from '@/components/Providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Agentverse — Build your business idea with AI',
+  title: 'ShipWith.AI — Build your business idea with AI',
   description: 'Tell us what you want to build. Our AI team handles the rest.',
 };
 

@@ -1,6 +1,6 @@
 {
   "id": "payment-integration",
-  "name": "Agentverse: Payment Integration",
+  "name": "ShipWith.AI: Payment Integration",
   "description": "Payment systems integration specialist. Sets up Stripe, Shopify payments, checkout flows, subscription billing, and ensures PCI compliance.",
   "capabilities": [
     "stripe-integration",

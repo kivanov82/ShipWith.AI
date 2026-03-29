@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-# Deploy Agentverse to Google Cloud Run
+# Deploy ShipWith.AI to Google Cloud Run
 # Usage: ./scripts/deploy.sh [--project PROJECT_ID] [--region REGION]
 
 PROJECT_ID="${GCLOUD_PROJECT:-}"
 REGION="${CLOUD_RUN_REGION:-europe-west1}"
-SERVICE_NAME="agentverse"
+SERVICE_NAME="shipwithai"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
 # Parse args

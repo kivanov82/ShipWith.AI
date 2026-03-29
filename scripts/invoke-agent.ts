@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * CLI script to invoke Agentverse agents locally
+ * CLI script to invoke ShipWith.AI agents locally
  * Usage: pnpm invoke <agent-id> "<prompt>" [--project <project-id>]
  */
 
@@ -12,7 +12,7 @@ const args = process.argv.slice(2);
 
 function printUsage() {
   console.log(`
-Agentverse Agent Invocation
+ShipWith.AI Agent Invocation
 
 Usage:
   pnpm invoke <agent-id> "<prompt>" [options]

@@ -9,7 +9,7 @@ export class EventBus {
   private pollInterval: NodeJS.Timeout | null = null;
   private lastEventId: string | null = null;
 
-  constructor(dbPath: string = './agentverse-events.db') {
+  constructor(dbPath: string = './shipwithai-events.db') {
     this.db = new Database(dbPath);
     this.init();
   }

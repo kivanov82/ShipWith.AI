@@ -35,7 +35,7 @@ export async function POST(
       : '';
 
     // Determine invocation mode
-    const mode = process.env.AGENTVERSE_MODE || 'cli';
+    const mode = process.env.SHIPWITHAI_MODE || 'cli';
 
     if (mode === 'api') {
       if (stream) {
