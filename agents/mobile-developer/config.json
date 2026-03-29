@@ -1,0 +1,50 @@
+{
+  "id": "mobile-developer",
+  "name": "Agentverse: Mobile Developer",
+  "description": "Mobile-first development specialist. Builds responsive, touch-friendly web prototypes with native-like interactions and progressive web app capabilities.",
+  "capabilities": [
+    "responsive-design",
+    "mobile-first-ui",
+    "progressive-web-app",
+    "touch-interactions",
+    "mobile-prototyping",
+    "performance-optimization",
+    "offline-support",
+    "gesture-handling"
+  ],
+  "pricing": {
+    "baseRate": "0.05",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "screens",
+      "type": "text",
+      "description": "Key screens to build",
+      "required": true
+    },
+    {
+      "name": "platform",
+      "type": "text",
+      "description": "Target platform (web, PWA, native feel)",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "prototype",
+      "type": "code",
+      "description": "Interactive mobile-first prototype",
+      "required": true
+    },
+    {
+      "name": "components",
+      "type": "code",
+      "description": "Reusable mobile UI components",
+      "required": false
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

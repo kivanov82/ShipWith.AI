@@ -58,7 +58,10 @@ const STEPS: OnboardingStep[] = [
 ];
 
 export function OnboardingOverlay() {
-  const { onboardingStep, onboardingComplete, nextOnboardingStep, skipOnboarding } = useAgentverseStore();
+  const { onboardingStep, onboardingComplete, nextOnboardingStep, skipOnboarding, activeUseCase } = useAgentverseStore();
+
+  // Skip onboarding entirely when user came through the use-case wizard
+  if (activeUseCase) return null;
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
   const currentStep = onboardingStep !== null ? STEPS[onboardingStep] : null;

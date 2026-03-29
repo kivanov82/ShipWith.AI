@@ -3,23 +3,26 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAgentverseStore, Agent } from '@/lib/store';
+import { USE_CASES } from '@/lib/use-cases';
 import { AgentCard } from './AgentCard';
 import { SpeechBubble, getBubblePosition } from './SpeechBubble';
 import { AgentChatBubble } from './AgentChatBubble';
 import { AgentDetailModal } from './AgentDetailModal';
 
-// Agent groupings
-const agentGroups = {
+// Agent groupings — full set
+const allAgentGroups = {
   core: ['pm', 'ux-analyst', 'ui-designer'],
-  development: ['ui-developer', 'backend-developer', 'solidity-developer', 'solidity-auditor', 'infrastructure'],
+  development: ['ui-developer', 'backend-developer', 'mobile-developer', 'solidity-developer', 'solidity-auditor', 'infrastructure'],
   support: ['qa-tester', 'unit-tester', 'tech-writer', 'marketing'],
+  specialists: ['seo-specialist', 'payment-integration', 'e-commerce-specialist'],
 };
 
 // Tighter ring radii to fit all agents
 const ringRadii = {
   core: 0.14,
   development: 0.28,
-  support: 0.42,
+  support: 0.40,
+  specialists: 0.48,
 };
 
 interface AgentPosition {
@@ -113,13 +116,33 @@ export function AgentCircle() {
     }
   }, [agents, chatAgent]);
 
+  const activeUseCase = useAgentverseStore((s) => s.activeUseCase);
+
+  // When a use case is active, only show its agents (distributed across 2-3 rings)
+  const agentGroups = useMemo(() => {
+    if (activeUseCase && USE_CASES[activeUseCase]) {
+      const ucAgents = USE_CASES[activeUseCase].agents;
+      // Distribute into 2 rings: core (first 2-3) and outer (rest)
+      const coreCount = Math.min(3, Math.ceil(ucAgents.length / 2));
+      return {
+        core: ucAgents.slice(0, coreCount),
+        development: ucAgents.slice(coreCount),
+        support: [] as string[],
+        specialists: [] as string[],
+      };
+    }
+    return allAgentGroups;
+  }, [activeUseCase]);
+
   const agentPositions = useMemo(() => {
     const positions: Record<string, AgentPosition> = {};
     const centerX = 50;
     const centerY = 50;
 
     Object.entries(agentGroups).forEach(([ring, agentIds]) => {
-      const radius = ringRadii[ring as keyof typeof ringRadii] * 100;
+      if (agentIds.length === 0) return;
+      const radiusKey = ring as keyof typeof ringRadii;
+      const radius = (ringRadii[radiusKey] ?? ringRadii.support) * 100;
       const angleStep = (2 * Math.PI) / agentIds.length;
       const startAngle = -Math.PI / 2;
 
@@ -135,7 +158,7 @@ export function AgentCircle() {
     });
 
     return positions;
-  }, []);
+  }, [agentGroups]);
 
   const getAgentActivity = (agentId: string): string | null => {
     const agent = agents.find(a => a.id === agentId);

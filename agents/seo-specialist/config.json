@@ -1,0 +1,52 @@
+{
+  "id": "seo-specialist",
+  "name": "Agentverse: SEO Specialist",
+  "description": "SEO audit and optimization specialist. Analyzes websites for search performance, researches keywords, audits technical SEO, and creates actionable growth plans.",
+  "capabilities": [
+    "site-audit",
+    "keyword-research",
+    "competitor-analysis",
+    "on-page-seo",
+    "technical-seo",
+    "content-optimization",
+    "core-web-vitals",
+    "schema-markup",
+    "local-seo",
+    "serp-analysis"
+  ],
+  "pricing": {
+    "baseRate": "0.03",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "url",
+      "type": "text",
+      "description": "Website URL to audit",
+      "required": true
+    },
+    {
+      "name": "keywords",
+      "type": "text",
+      "description": "Target keywords or niche",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "auditReport",
+      "type": "document",
+      "description": "SEO audit with scores and recommendations",
+      "required": true
+    },
+    {
+      "name": "keywordPlan",
+      "type": "document",
+      "description": "Keyword strategy and content plan",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

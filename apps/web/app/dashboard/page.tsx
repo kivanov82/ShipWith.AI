@@ -11,6 +11,7 @@ import { ProjectSummary } from '@/components/ProjectSummary';
 import { SessionPanel } from '@/components/SessionPanel';
 import { WalletButton, MobileWalletButton } from '@/components/WalletButton';
 import { OnboardingOverlay, OnboardingHelpButton } from '@/components/OnboardingOverlay';
+import { ProjectBrief } from '@/components/ProjectBrief';
 import {
   Play,
   FolderOpen,
@@ -49,7 +50,10 @@ function Dashboard() {
     requestAllDeliveries,
     requestDelivery,
     agents,
+    activeUseCase,
   } = useAgentverseStore();
+
+  const isUseCaseMode = !!activeUseCase;
 
   // Auto-run demo if mode=demo
   useEffect(() => {
@@ -160,47 +164,51 @@ function Dashboard() {
 
         {/* Mode Toggle & Demo Button */}
         <div className="p-3 border-t border-zinc-800 space-y-2">
-          {/* Real Mode Toggle */}
-          <button
-            onClick={() => setRealMode(!isRealMode)}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${
-              isRealMode
-                ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
-                : 'bg-zinc-800/50 border-zinc-700 text-zinc-500 hover:text-zinc-400'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5" />
-              Real Mode
-            </span>
-            <div className={`w-8 h-4 rounded-full transition-colors ${isRealMode ? 'bg-yellow-500' : 'bg-zinc-700'}`}>
-              <div className={`w-3 h-3 rounded-full bg-white mt-0.5 transition-transform ${isRealMode ? 'translate-x-4.5 ml-0.5' : 'ml-0.5'}`} />
-            </div>
-          </button>
+          {!isUseCaseMode && (
+            <>
+              {/* Real Mode Toggle */}
+              <button
+                onClick={() => setRealMode(!isRealMode)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${
+                  isRealMode
+                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500'
+                    : 'bg-zinc-800/50 border-zinc-700 text-zinc-500 hover:text-zinc-400'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5" />
+                  Real Mode
+                </span>
+                <div className={`w-8 h-4 rounded-full transition-colors ${isRealMode ? 'bg-yellow-500' : 'bg-zinc-700'}`}>
+                  <div className={`w-3 h-3 rounded-full bg-white mt-0.5 transition-transform ${isRealMode ? 'translate-x-4.5 ml-0.5' : 'ml-0.5'}`} />
+                </div>
+              </button>
 
-          {/* Demo Button */}
-          <button
-            onClick={handleRunDemo}
-            disabled={isRunningDemo || isRealMode}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-400 text-zinc-900 rounded-lg text-xs font-medium transition-colors"
-          >
-            {isRunningDemo ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" />
-                Running...
-              </>
-            ) : (
-              <>
-                <Play className="w-3.5 h-3.5" />
-                Run Demo
-              </>
-            )}
-          </button>
+              {/* Demo Button */}
+              <button
+                onClick={handleRunDemo}
+                disabled={isRunningDemo || isRealMode}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-400 text-zinc-900 rounded-lg text-xs font-medium transition-colors"
+              >
+                {isRunningDemo ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5" />
+                    Run Demo
+                  </>
+                )}
+              </button>
 
-          {isRealMode && (
-            <p className="text-[9px] text-zinc-600 text-center">
-              Click any agent to send real prompts
-            </p>
+              {isRealMode && (
+                <p className="text-[9px] text-zinc-600 text-center">
+                  Click any agent to send real prompts
+                </p>
+              )}
+            </>
           )}
 
           {/* Help / Tour button */}
@@ -247,6 +255,13 @@ function Dashboard() {
 
           {/* Right Panel */}
           <div className="w-full lg:w-72 flex flex-col min-h-0 bg-zinc-900/30">
+            {/* Project Brief (use-case mode) */}
+            {isUseCaseMode && (
+              <div className="p-2 border-b border-zinc-800">
+                <ProjectBrief />
+              </div>
+            )}
+
             {/* Deliverables */}
             <div className="flex-1 flex flex-col min-h-0 border-b border-zinc-800">
               <div className="p-2.5 border-b border-zinc-800 flex items-center gap-2">

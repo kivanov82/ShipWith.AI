@@ -1,0 +1,50 @@
+{
+  "id": "payment-integration",
+  "name": "Agentverse: Payment Integration",
+  "description": "Payment systems integration specialist. Sets up Stripe, Shopify payments, checkout flows, subscription billing, and ensures PCI compliance.",
+  "capabilities": [
+    "stripe-integration",
+    "shopify-payments",
+    "checkout-flows",
+    "subscription-billing",
+    "payment-gateway",
+    "webhook-setup",
+    "pci-compliance",
+    "refund-handling"
+  ],
+  "pricing": {
+    "baseRate": "0.05",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "platform",
+      "type": "text",
+      "description": "Payment platform (Stripe, Shopify, etc.)",
+      "required": true
+    },
+    {
+      "name": "requirements",
+      "type": "text",
+      "description": "Payment flow requirements",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "integration",
+      "type": "code",
+      "description": "Payment integration code and configuration",
+      "required": true
+    },
+    {
+      "name": "documentation",
+      "type": "document",
+      "description": "Setup guide and webhook documentation",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}

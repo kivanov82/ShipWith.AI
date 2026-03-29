@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
+import { type UseCaseId, USE_CASES, GITHUB_STEP } from './use-cases';
 
 // Fire-and-forget persistence helpers
 const syncToApi = (url: string, data: unknown) => {
@@ -216,6 +217,15 @@ interface AgentverseState {
   nextOnboardingStep: () => void;
   skipOnboarding: () => void;
 
+  // Use case flow
+  activeUseCase: UseCaseId | null;
+  useCaseAnswers: Record<string, string | string[] | null>;
+  githubMode: 'own' | 'agentverse' | null;
+  repoUrl: string | null;
+  setActiveUseCase: (uc: UseCaseId | null) => void;
+  setUseCaseAnswers: (answers: Record<string, string | string[] | null>) => void;
+  initializeFromUseCase: (useCaseId: UseCaseId, answers: Record<string, string | string[] | null>) => void;
+
   // Hydration
   loadSessionFromApi: (sessionId: string) => Promise<void>;
   loadSessionsFromApi: () => Promise<void>;
@@ -235,6 +245,11 @@ const initialAgents: Agent[] = [
   { id: 'unit-tester', name: 'Unit Tester', role: 'Test Coverage', description: 'Unit tests & mocking', pricing: '$0.02-0.06', status: 'idle', avatar: 'UT', color: '#14b8a6', balance: 100 },
   { id: 'tech-writer', name: 'Tech Writer', role: 'Documentation', description: 'Docs, guides & READMEs', pricing: '$0.02-0.05', status: 'idle', avatar: 'TW', color: '#a855f7', balance: 100 },
   { id: 'marketing', name: 'Marketing', role: 'Content & Copy', description: 'Launch content & campaigns', pricing: '$0.02-0.06', status: 'idle', avatar: 'MK', color: '#06b6d4', balance: 100 },
+  // New specialist agents
+  { id: 'seo-specialist', name: 'SEO Specialist', role: 'SEO & Search', description: 'Site audits & keyword strategy', pricing: '$0.03-0.08', status: 'idle', avatar: 'SE', color: '#22c55e', balance: 100 },
+  { id: 'payment-integration', name: 'Payment Integration', role: 'Payments & Billing', description: 'Stripe, Shopify & checkout flows', pricing: '$0.05-0.12', status: 'idle', avatar: 'PI', color: '#eab308', balance: 100 },
+  { id: 'mobile-developer', name: 'Mobile Developer', role: 'Mobile-First Dev', description: 'Responsive & PWA prototypes', pricing: '$0.05-0.12', status: 'idle', avatar: 'MB', color: '#f472b6', balance: 100 },
+  { id: 'e-commerce-specialist', name: 'E-commerce Specialist', role: 'Store Setup', description: 'Shopify, catalogs & shipping', pricing: '$0.04-0.10', status: 'idle', avatar: 'EC', color: '#fb923c', balance: 100 },
 ];
 
 export const useAgentverseStore = create<AgentverseState>((set, get) => ({
@@ -317,12 +332,8 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
   setCurrentProject: (project) => set({ currentProject: project }),
 
   // Project History
-  projects: [
-    { id: 'demo-1', name: 'Token Launchpad', description: 'ERC-20 token launch platform', status: 'completed', createdAt: Date.now() - 86400000 * 7 },
-    { id: 'demo-2', name: 'NFT Marketplace', description: 'Multi-chain NFT trading platform', status: 'active', createdAt: Date.now() - 86400000 * 3 },
-    { id: 'demo-3', name: 'DeFi Dashboard', description: 'Portfolio tracking and analytics', status: 'planning', createdAt: Date.now() - 86400000 },
-  ],
-  activeProjectId: 'demo-2',
+  projects: [],
+  activeProjectId: null,
   addProject: (project) =>
     set((state) => ({
       projects: [
@@ -610,6 +621,59 @@ export const useAgentverseStore = create<AgentverseState>((set, get) => ({
       localStorage.setItem('agentverse-onboarding-complete', 'true');
     }
     return set({ onboardingStep: null, onboardingComplete: true });
+  },
+
+  // Use case flow
+  activeUseCase: null,
+  useCaseAnswers: {},
+  githubMode: null,
+  repoUrl: null,
+  setActiveUseCase: (uc) => set({ activeUseCase: uc }),
+  setUseCaseAnswers: (answers) => set({ useCaseAnswers: answers }),
+  initializeFromUseCase: (useCaseId, answers) => {
+    const config = USE_CASES[useCaseId];
+    if (!config) return;
+
+    const projectId = nanoid();
+    const sessionId = nanoid();
+    const brief = config.pmBriefTemplate(answers);
+    const githubMode = (answers.github as string) === 'own' ? 'own' : 'agentverse';
+
+    const project: Project = {
+      id: projectId,
+      name: config.label,
+      description: brief,
+      status: 'planning',
+      createdAt: Date.now(),
+    };
+
+    const session: Session = {
+      id: sessionId,
+      name: `${config.label} — ${new Date().toLocaleDateString()}`,
+      description: brief,
+      status: 'context-building',
+      involvedAgents: config.agents,
+      context: {},
+      deliveryRequests: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    set((state) => ({
+      activeUseCase: useCaseId,
+      useCaseAnswers: answers,
+      githubMode,
+      projects: [project, ...state.projects],
+      activeProjectId: projectId,
+      sessions: [session, ...state.sessions],
+      activeSession: session,
+      chatMessages: [],
+      onboardingComplete: true,
+      onboardingStep: null,
+    }));
+
+    // Persist
+    syncToApi('/api/sessions', { id: sessionId, name: session.name, description: brief });
   },
 
   // Hydration from persistence API

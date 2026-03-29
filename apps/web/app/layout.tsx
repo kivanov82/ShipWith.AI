@@ -3,8 +3,8 @@ import { Providers } from '@/components/Providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Agentverse',
-  description: 'AI agents working together to build Web3 software',
+  title: 'Agentverse — Build your business idea with AI',
+  description: 'Tell us what you want to build. Our AI team handles the rest.',
 };
 
 export const viewport: Viewport = {

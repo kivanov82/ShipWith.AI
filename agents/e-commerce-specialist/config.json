@@ -1,0 +1,50 @@
+{
+  "id": "e-commerce-specialist",
+  "name": "Agentverse: E-commerce Specialist",
+  "description": "E-commerce setup specialist. Configures online stores with product catalogs, inventory management, shipping, and store optimization for maximum conversions.",
+  "capabilities": [
+    "shopify-setup",
+    "product-catalog",
+    "inventory-management",
+    "shipping-config",
+    "store-optimization",
+    "conversion-optimization",
+    "product-seo",
+    "order-management"
+  ],
+  "pricing": {
+    "baseRate": "0.04",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "products",
+      "type": "text",
+      "description": "Product types and catalog size",
+      "required": true
+    },
+    {
+      "name": "platform",
+      "type": "text",
+      "description": "Preferred platform (Shopify, custom)",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "storeConfig",
+      "type": "code",
+      "description": "Store configuration and product schema",
+      "required": true
+    },
+    {
+      "name": "guide",
+      "type": "document",
+      "description": "Store management guide",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null
+}
