@@ -1,6 +1,7 @@
 {
   "id": "backend-developer",
   "name": "ShipWith.AI: Integration Developer",
+  "model": "claude-opus-4-20250514",
   "description": "API integration and serverless specialist. Connects frontends to external APIs, blockchain data sources, subgraphs, and handles wallet-based authentication within Next.js.",
   "capabilities": [
     "api-integration",

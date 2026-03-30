@@ -42,8 +42,10 @@ function getApp(): App {
   // Local dev: use service account key if provided
   const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   if (keyPath) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const serviceAccount = require(keyPath);
+    const path = require('path');
+    const fs = require('fs');
+    const resolved = path.isAbsolute(keyPath) ? keyPath : path.resolve(process.cwd(), keyPath);
+    const serviceAccount = JSON.parse(fs.readFileSync(resolved, 'utf8'));
     return initializeApp({ credential: cert(serviceAccount), projectId });
   }
 
@@ -59,6 +61,11 @@ export class FirestoreStore {
   constructor() {
     const app = getApp();
     this.db = getFirestore(app);
+    try {
+      this.db.settings({ ignoreUndefinedProperties: true });
+    } catch {
+      // Already initialized (e.g. HMR) — safe to ignore
+    }
   }
 
   // ---- Projects ----

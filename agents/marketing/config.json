@@ -1,6 +1,7 @@
 {
   "id": "marketing",
   "name": "ShipWith.AI: Marketing Specialist",
+  "model": "claude-sonnet-4-20250514",
   "description": "Marketing strategy and content specialist with full access to project context. Creates authentic, grounded content for Web3 audiences. Expert in Twitter, Farcaster, and Moltbook.",
   "capabilities": [
     "marketing-strategy",

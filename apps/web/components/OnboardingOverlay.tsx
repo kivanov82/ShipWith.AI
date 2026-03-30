@@ -58,10 +58,7 @@ const STEPS: OnboardingStep[] = [
 ];
 
 export function OnboardingOverlay() {
-  const { onboardingStep, onboardingComplete, nextOnboardingStep, skipOnboarding, activeUseCase } = useShipWithAIStore();
-
-  // Skip onboarding entirely when user came through the use-case wizard
-  if (activeUseCase) return null;
+  const { onboardingStep, nextOnboardingStep, skipOnboarding, activeUseCase } = useShipWithAIStore();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
   const currentStep = onboardingStep !== null ? STEPS[onboardingStep] : null;
@@ -85,6 +82,8 @@ export function OnboardingOverlay() {
     return () => window.removeEventListener('resize', updateTargetRect);
   }, [updateTargetRect]);
 
+  // Skip onboarding when user came through the use-case wizard
+  if (activeUseCase) return null;
   if (onboardingStep === null || !currentStep) return null;
 
   const isCenter = currentStep.position === 'center' || !targetRect;

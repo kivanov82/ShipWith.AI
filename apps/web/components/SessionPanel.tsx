@@ -74,18 +74,18 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
     <div className="absolute top-4 right-4 z-50 w-72 session-panel">
       {/* Main Panel */}
       <motion.div
-        className="bg-zinc-900/95 backdrop-blur border border-zinc-800 rounded-xl shadow-2xl overflow-hidden"
+        className="glass rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
         {/* Header */}
         <div
-          className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-zinc-800/50"
+          className="px-4 py-3 border-b border-zinc-800/60 flex items-center justify-between cursor-pointer hover:bg-zinc-800/30"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-2">
             <Package className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-medium text-zinc-200">
+            <span className="text-sm font-semibold text-zinc-200 font-display">
               {activeSession ? activeSession.name : 'No Active Session'}
             </span>
           </div>
@@ -115,7 +115,7 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
                   </p>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 mx-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm rounded-lg transition-colors"
+                    className="flex items-center gap-2 mx-auto px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-sm rounded-xl transition-all font-semibold shadow-lg shadow-emerald-900/20"
                   >
                     <Plus className="w-4 h-4" />
                     New Session
@@ -194,7 +194,7 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
                       <div className="space-y-2">
                         <button
                           onClick={() => onRequestDelivery(activeSession.id)}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg transition-colors"
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-emerald-900/20"
                         >
                           <Zap className="w-3.5 h-3.5" />
                           Request All Deliveries
@@ -254,13 +254,13 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
-              className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-96 shadow-2xl"
+              className="bg-[#0e0e12] border border-zinc-700/60 rounded-2xl p-6 w-96 shadow-2xl shadow-black/40"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold text-zinc-100 mb-4">New Session</h3>
+              <h3 className="text-lg font-bold text-zinc-100 mb-4 font-display">New Session</h3>
               <input
                 type="text"
                 value={newSessionName}
@@ -280,7 +280,7 @@ export function SessionPanel({ onRequestDelivery }: SessionPanelProps) {
                 <button
                   onClick={handleCreateSession}
                   disabled={!newSessionName.trim()}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 disabled:text-zinc-500 text-white text-sm rounded-lg transition-colors"
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 text-white text-sm rounded-xl transition-all font-semibold"
                 >
                   Create
                 </button>

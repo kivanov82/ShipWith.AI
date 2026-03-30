@@ -1,6 +1,7 @@
 {
   "id": "seo-specialist",
   "name": "ShipWith.AI: SEO Specialist",
+  "model": "claude-sonnet-4-20250514",
   "description": "SEO audit and optimization specialist. Analyzes websites for search performance, researches keywords, audits technical SEO, and creates actionable growth plans.",
   "capabilities": [
     "site-audit",

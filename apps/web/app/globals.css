@@ -2,21 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* v0-inspired dark theme */
+/* ── Design System ─────────────────────────────────── */
 :root {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --muted: #171717;
+  --background: #060608;
+  --foreground: #f4f4f5;
+  --muted: #131316;
   --muted-foreground: #a1a1aa;
-  --border: #27272a;
-  --border-subtle: #1f1f23;
-  --card: #0f0f0f;
-  --card-hover: #161616;
-  --accent: #ffffff;
+  --border: #23232a;
+  --border-subtle: #1a1a20;
+  --card: #0c0c0f;
+  --card-hover: #141418;
+  --accent: #34d399;
+  --accent-secondary: #22d3ee;
   --accent-muted: #a1a1aa;
-  --success: #22c55e;
-  --warning: #eab308;
-  --error: #ef4444;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --info: #60a5fa;
+  --brand-gradient: linear-gradient(135deg, #34d399 0%, #22d3ee 50%, #818cf8 100%);
+  --brand-glow: 0 0 80px rgba(52, 211, 153, 0.15), 0 0 160px rgba(34, 211, 238, 0.08);
 }
 
 * {
@@ -26,17 +30,22 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   font-feature-settings: 'rlig' 1, 'calt' 1;
 }
 
-/* Dark scrollbar */
+/* ── Typography ────────────────────────────────────── */
+h1, h2, h3, .font-display {
+  font-family: 'Syne', -apple-system, sans-serif;
+}
+
+/* ── Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -44,15 +53,15 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #2a2a32;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #3f3f46;
 }
 
-/* Focus styles */
+/* ── Focus ─────────────────────────────────────────── */
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
@@ -60,22 +69,136 @@ textarea:focus-visible {
   outline-offset: 1px;
 }
 
-/* Subtle transitions */
+/* ── Subtle transitions (exclude transforms for perf) */
 * {
-  transition-property: background-color, border-color, color, fill, stroke, opacity;
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-/* Modal backdrop */
-.modal-backdrop {
-  backdrop-filter: blur(4px);
-  background: rgba(0, 0, 0, 0.7);
+/* ── Background Textures ───────────────────────────── */
+.bg-noise {
+  position: relative;
+}
+.bg-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* Glass effect for cards */
+.bg-grid {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-dots {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+  background-size: 32px 32px;
+}
+
+/* ── Brand Gradient Text ───────────────────────────── */
+.text-gradient {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Ambient Glow ──────────────────────────────────── */
+.glow-ambient {
+  box-shadow: var(--brand-glow);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 40px rgba(52, 211, 153, 0.2), 0 0 80px rgba(52, 211, 153, 0.08);
+}
+
+.glow-center {
+  background: radial-gradient(ellipse at center, rgba(52, 211, 153, 0.06) 0%, rgba(34, 211, 238, 0.03) 40%, transparent 70%);
+}
+
+/* ── Glass Effect ──────────────────────────────────── */
 .glass {
-  background: rgba(15, 15, 15, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(12, 12, 15, 0.75);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border);
+}
+
+/* ── Modal Backdrop ────────────────────────────────── */
+.modal-backdrop {
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* ── Mesh Gradient Background (landing) ────────────── */
+.bg-mesh {
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(52, 211, 153, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 30%, rgba(34, 211, 238, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 80%, rgba(129, 140, 248, 0.05) 0%, transparent 60%),
+    var(--background);
+}
+
+/* ── Animated Gradient Border ──────────────────────── */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.border-gradient {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--angle), transparent 40%, rgba(52,211,153,0.3) 50%, rgba(34,211,238,0.3) 60%, transparent 70%);
+  z-index: -1;
+  animation: rotate-gradient 4s linear infinite;
+}
+
+@keyframes rotate-gradient {
+  to { --angle: 360deg; }
+}
+
+/* ── Ring Pulse Animation ──────────────────────────── */
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.3; }
+}
+
+.ring-pulse {
+  animation: ring-pulse 6s ease-in-out infinite;
+}
+
+/* ── Float Animation ───────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ── Shimmer ───────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 33%, rgba(255,255,255,0.04) 50%, transparent 66%);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
 }

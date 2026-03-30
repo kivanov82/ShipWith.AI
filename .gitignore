@@ -2,6 +2,10 @@
 node_modules/
 .pnpm-store/
 
+# Service account keys
+*-sa-key.json
+*-service-account*.json
+
 # Build outputs
 dist/
 .next/

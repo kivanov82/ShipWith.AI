@@ -1,6 +1,7 @@
 {
   "id": "unit-tester",
   "name": "ShipWith.AI: Unit Tester",
+  "model": "claude-sonnet-4-20250514",
   "description": "Unit testing specialist writing comprehensive test suites for code quality and reliability. Expert in Jest, Vitest, and smart contract testing.",
   "capabilities": [
     "unit-testing",

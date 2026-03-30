@@ -7,19 +7,20 @@ const chains = process.env.NEXT_PUBLIC_CHAIN === 'base'
   ? [base] as const
   : [baseSepolia, base] as const;
 
-// Lazy initialization to avoid errors during SSR/build when projectId is missing
-let _config: ReturnType<typeof getDefaultConfig> | null = null;
+// Module-scoped singleton — survives HMR and re-imports
+const globalKey = '__shipwithai_wagmi_config__' as const;
+const g = globalThis as unknown as Record<string, ReturnType<typeof getDefaultConfig>>;
 
 export function getWagmiConfig() {
-  if (!_config) {
-    _config = getDefaultConfig({
+  if (!g[globalKey]) {
+    g[globalKey] = getDefaultConfig({
       appName: 'ShipWith.AI',
       projectId,
       chains,
       ssr: true,
     });
   }
-  return _config;
+  return g[globalKey];
 }
 
 export const wagmiConfig = projectId ? getWagmiConfig() : null;

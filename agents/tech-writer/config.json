@@ -1,6 +1,7 @@
 {
   "id": "tech-writer",
   "name": "ShipWith.AI: Tech Writer",
+  "model": "claude-sonnet-4-20250514",
   "description": "Technical documentation specialist creating clear, comprehensive docs. Expert in API documentation, user guides, and developer documentation.",
   "capabilities": [
     "technical-writing",

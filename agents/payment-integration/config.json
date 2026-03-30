@@ -1,6 +1,7 @@
 {
   "id": "payment-integration",
   "name": "ShipWith.AI: Payment Integration",
+  "model": "claude-sonnet-4-20250514",
   "description": "Payment systems integration specialist. Sets up Stripe, Shopify payments, checkout flows, subscription billing, and ensures PCI compliance.",
   "capabilities": [
     "stripe-integration",

@@ -1,6 +1,7 @@
 {
   "id": "ux-analyst",
   "name": "ShipWith.AI: UX Analyst",
+  "model": "claude-opus-4-20250514",
   "description": "User experience research and design specialist creating user flows, wireframes, and interaction patterns. Expert in Web3 UX patterns and accessibility.",
   "capabilities": [
     "user-research",

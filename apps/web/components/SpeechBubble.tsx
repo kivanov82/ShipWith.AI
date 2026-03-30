@@ -10,16 +10,15 @@ interface SpeechBubbleProps {
 }
 
 export function SpeechBubble({ content, agentColor, position, isThinking = false }: SpeechBubbleProps) {
-  // Bright colors for thinking state
-  const bgColor = isThinking ? 'bg-yellow-500' : 'bg-zinc-800';
-  const textColor = isThinking ? 'text-yellow-950' : 'text-zinc-300';
-  const borderColor = isThinking ? 'border-yellow-400' : 'border-zinc-700';
+  const bgColor = isThinking ? 'bg-amber-500' : 'bg-[#141418]';
+  const textColor = isThinking ? 'text-amber-950' : 'text-zinc-300';
+  const borderColor = isThinking ? 'border-amber-400' : 'border-zinc-700/60';
 
   const tailStyles = {
-    top: `bottom-[-6px] left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent ${isThinking ? 'border-t-yellow-500' : 'border-t-zinc-800'}`,
-    bottom: `top-[-6px] left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent ${isThinking ? 'border-b-yellow-500' : 'border-b-zinc-800'}`,
-    left: `right-[-6px] top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-t-transparent border-b-transparent ${isThinking ? 'border-l-yellow-500' : 'border-l-zinc-800'}`,
-    right: `left-[-6px] top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-r-[6px] border-t-transparent border-b-transparent ${isThinking ? 'border-r-yellow-500' : 'border-r-zinc-800'}`,
+    top: `bottom-[-6px] left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent ${isThinking ? 'border-t-amber-500' : 'border-t-[#141418]'}`,
+    bottom: `top-[-6px] left-1/2 -translate-x-1/2 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent ${isThinking ? 'border-b-amber-500' : 'border-b-[#141418]'}`,
+    left: `right-[-6px] top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-l-[6px] border-t-transparent border-b-transparent ${isThinking ? 'border-l-amber-500' : 'border-l-[#141418]'}`,
+    right: `left-[-6px] top-1/2 -translate-y-1/2 border-t-[6px] border-b-[6px] border-r-[6px] border-t-transparent border-b-transparent ${isThinking ? 'border-r-amber-500' : 'border-r-[#141418]'}`,
   };
 
   return (
@@ -31,12 +30,12 @@ export function SpeechBubble({ content, agentColor, position, isThinking = false
       transition={{ duration: 0.2 }}
     >
       <div
-        className={`relative ${bgColor} rounded-lg px-2 py-1.5 border ${borderColor} shadow-lg`}
+        className={`relative ${bgColor} rounded-xl px-2.5 py-2 border ${borderColor} shadow-xl shadow-black/20`}
       >
         {/* Accent line */}
         {!isThinking && (
           <div
-            className="absolute top-0 left-2 right-2 h-0.5 rounded-full"
+            className="absolute top-0 left-3 right-3 h-[2px] rounded-full opacity-60"
             style={{ backgroundColor: agentColor }}
           />
         )}
@@ -44,7 +43,7 @@ export function SpeechBubble({ content, agentColor, position, isThinking = false
         {/* Thinking indicator */}
         {isThinking && (
           <motion.div
-            className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-yellow-600"
+            className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-amber-600"
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           />

@@ -1,6 +1,7 @@
 {
   "id": "pm",
   "name": "ShipWith.AI: Project Manager",
+  "model": "claude-sonnet-4-20250514",
   "description": "Orchestrates projects, breaks down requirements, assigns tasks to specialist agents, and ensures quality delivery. The central coordinator of the ShipWith.AI development team.",
   "capabilities": [
     "requirements-analysis",

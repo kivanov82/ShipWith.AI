@@ -1,6 +1,7 @@
 {
   "id": "mobile-developer",
   "name": "ShipWith.AI: Mobile Developer",
+  "model": "claude-sonnet-4-20250514",
   "description": "Mobile-first development specialist. Builds responsive, touch-friendly web prototypes with native-like interactions and progressive web app capabilities.",
   "capabilities": [
     "responsive-design",

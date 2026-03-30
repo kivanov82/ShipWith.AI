@@ -6,7 +6,7 @@ import { useShipWithAIStore, Agent } from '@/lib/store';
 import { USE_CASES } from '@/lib/use-cases';
 import { AgentCard } from './AgentCard';
 import { SpeechBubble, getBubblePosition } from './SpeechBubble';
-import { AgentChatBubble } from './AgentChatBubble';
+import { AgentChatPanel } from './AgentChatPanel';
 import { AgentDetailModal } from './AgentDetailModal';
 
 // Agent groupings — full set
@@ -33,9 +33,9 @@ interface AgentPosition {
 }
 
 function ConnectionLine({ from, to, type }: { from: AgentPosition; to: AgentPosition; type: string }) {
-  const lineColor = type === 'payment' ? '#22c55e' :
-                    type === 'question' ? '#eab308' :
-                    '#a1a1aa';
+  const lineColor = type === 'payment' ? '#34d399' :
+                    type === 'question' ? '#fbbf24' :
+                    '#71717a';
 
   return (
     <g>
@@ -49,7 +49,7 @@ function ConnectionLine({ from, to, type }: { from: AgentPosition; to: AgentPosi
         strokeLinecap="round"
         strokeDasharray="4 4"
         initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 0.4 }}
+        animate={{ pathLength: 1, opacity: 0.35 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
       />
@@ -70,9 +70,7 @@ function ConnectionLine({ from, to, type }: { from: AgentPosition; to: AgentPosi
 
 export function AgentCircle() {
   const { agents, activities, activeConnections, chatMessages, activeSession, createSession } = useShipWithAIStore();
-  const [detailAgent, setDetailAgent] = useState<Agent | null>(null);
-  const [chatAgent, setChatAgent] = useState<string | null>(null);
-  const [chatMode, setChatMode] = useState<'chat' | 'job'>('chat');
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showSessionInput, setShowSessionInput] = useState(false);
   const [sessionName, setSessionName] = useState('');
 
@@ -84,12 +82,18 @@ export function AgentCircle() {
     }
   };
 
-  const openChat = (agentId: string, mode: 'chat' | 'job') => {
-    setChatAgent(agentId);
-    setChatMode(mode);
-  };
+  // Auto-select the first involved agent when session loads and no chat has started
+  useEffect(() => {
+    if (activeSession && !selectedAgent && chatMessages.length === 0 && activeSession.involvedAgents.length > 0) {
+      const firstAgentId = activeSession.involvedAgents[0];
+      const agent = agents.find((a) => a.id === firstAgentId);
+      if (agent) {
+        setSelectedAgent(agent);
+      }
+    }
+  }, [activeSession, selectedAgent, chatMessages.length, agents]);
 
-  // Auto-open chat for agent that's asking questions
+  // Auto-select agent that's asking a question
   useEffect(() => {
     const latestAgentMessage = chatMessages
       .filter((m) => m.role === 'agent' && m.isQuestion)
@@ -98,23 +102,10 @@ export function AgentCircle() {
     if (latestAgentMessage?.agentId) {
       const agent = agents.find((a) => a.id === latestAgentMessage.agentId);
       if (agent && agent.status === 'waiting') {
-        setChatAgent(latestAgentMessage.agentId);
+        setSelectedAgent(agent);
       }
     }
   }, [chatMessages, agents]);
-
-  // Auto-close chat when agent stops waiting
-  useEffect(() => {
-    if (chatAgent) {
-      const agent = agents.find((a) => a.id === chatAgent);
-      if (agent && agent.status !== 'waiting' && agent.status !== 'idle') {
-        const timeout = setTimeout(() => {
-          setChatAgent(null);
-        }, 2000);
-        return () => clearTimeout(timeout);
-      }
-    }
-  }, [agents, chatAgent]);
 
   const activeUseCase = useShipWithAIStore((s) => s.activeUseCase);
 
@@ -122,7 +113,6 @@ export function AgentCircle() {
   const agentGroups = useMemo(() => {
     if (activeUseCase && USE_CASES[activeUseCase]) {
       const ucAgents = USE_CASES[activeUseCase].agents;
-      // Distribute into 2 rings: core (first 2-3) and outer (rest)
       const coreCount = Math.min(3, Math.ceil(ucAgents.length / 2));
       return {
         core: ucAgents.slice(0, coreCount),
@@ -181,18 +171,35 @@ export function AgentCircle() {
 
   return (
     <div className="relative w-full h-full min-h-[450px] flex items-center justify-center overflow-hidden agent-circle-container">
-      {/* Ring guides */}
+      {/* Background depth — radial glow from center */}
+      <div className="absolute inset-0 glow-center pointer-events-none" />
+      <div className="absolute inset-0 bg-dots pointer-events-none opacity-40" />
+
+      {/* Ring guides with gradient glow */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid meet">
-        {Object.values(ringRadii).map((radius, i) => (
+        <defs>
+          <radialGradient id="ring-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#34d399" stopOpacity="0.04" />
+            <stop offset="50%" stopColor="#22d3ee" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Ambient center glow */}
+        <circle cx="50%" cy="50%" r="12%" fill="url(#ring-glow)" />
+
+        {Object.entries(ringRadii).map(([ring, radius], i) => (
           <circle
-            key={i}
+            key={ring}
             cx="50%"
             cy="50%"
             r={`${radius * 100}%`}
             fill="none"
-            stroke="#1f1f23"
+            stroke={i === 0 ? '#22332a' : '#1a1a22'}
             strokeWidth="1"
-            strokeDasharray="4 4"
+            strokeDasharray="3 6"
+            className="ring-pulse"
+            style={{ animationDelay: `${i * 1.5}s` }}
           />
         ))}
 
@@ -214,13 +221,15 @@ export function AgentCircle() {
         </AnimatePresence>
       </svg>
 
-      {/* Center button/label */}
+      {/* Static chat panel — top left */}
+      <AgentChatPanel activeAgent={selectedAgent} />
+
+      {/* Center area — CTA or status */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
         {!activeSession ? (
-          /* No session - show Start button */
           showSessionInput ? (
             <motion.div
-              className="bg-zinc-900 border border-emerald-600 rounded-xl p-3 shadow-xl"
+              className="glass rounded-2xl p-4 shadow-2xl shadow-emerald-900/20 border-emerald-500/30"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
             >
@@ -229,24 +238,24 @@ export function AgentCircle() {
                 value={sessionName}
                 onChange={(e) => setSessionName(e.target.value)}
                 placeholder="Project name..."
-                className="w-32 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-600 mb-2"
+                className="w-36 px-3 py-1.5 bg-zinc-800/80 border border-zinc-700 rounded-lg text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 mb-2"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleStartSession();
                   if (e.key === 'Escape') setShowSessionInput(false);
                 }}
               />
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 <button
                   onClick={() => setShowSessionInput(false)}
-                  className="flex-1 text-[10px] text-zinc-500 hover:text-zinc-300 py-1"
+                  className="flex-1 text-[10px] text-zinc-500 hover:text-zinc-300 py-1.5 rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleStartSession}
                   disabled={!sessionName.trim()}
-                  className="flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white py-1 rounded transition-colors"
+                  className="flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-700 text-white py-1.5 rounded-lg transition-colors font-medium"
                 >
                   Start
                 </button>
@@ -255,69 +264,100 @@ export function AgentCircle() {
           ) : (
             <motion.button
               onClick={() => setShowSessionInput(true)}
-              className="w-20 h-20 rounded-full bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-400 flex flex-col items-center justify-center cursor-pointer transition-colors shadow-lg shadow-emerald-900/50"
-              whileHover={{ scale: 1.05 }}
+              className="relative rounded-full flex flex-col items-center justify-center cursor-pointer"
+              whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
+              style={{ width: 88, height: 88 }}
             >
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-                Start
-              </span>
-              <span className="text-[8px] text-emerald-200">
-                Session
-              </span>
+              {/* Outer glow ring */}
+              <motion.div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: 'conic-gradient(from 0deg, #34d399, #22d3ee, #818cf8, #34d399)',
+                  padding: 2,
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+              >
+                <div className="w-full h-full rounded-full bg-[#0a0e0c]" />
+              </motion.div>
+
+              {/* Inner content */}
+              <div className="absolute inset-1 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 flex flex-col items-center justify-center shadow-lg shadow-emerald-900/40">
+                <span className="text-[11px] font-bold text-white uppercase tracking-wider font-display">
+                  Start
+                </span>
+                <span className="text-[9px] text-emerald-200/80 font-medium">
+                  Session
+                </span>
+              </div>
             </motion.button>
           )
-        ) : (
-          /* Active session - show status */
+        ) : !selectedAgent ? (
+          /* Active session, no agent selected — show guidance */
           <motion.div
-            className={`w-20 h-20 rounded-full flex flex-col items-center justify-center border-2 ${
-              activeSession.status === 'context-building'
-                ? 'bg-emerald-900/50 border-emerald-600'
-                : activeSession.status === 'delivering'
-                ? 'bg-yellow-900/50 border-yellow-600'
-                : 'bg-green-900/50 border-green-600'
-            }`}
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            className="flex flex-col items-center text-center"
+            style={{ width: 180 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <span className="text-[8px] font-medium text-zinc-400 uppercase">
-              {activeSession.status === 'context-building' ? 'Building' : activeSession.status.replace('-', ' ')}
-            </span>
-            <span className="text-[10px] font-bold text-white truncate max-w-[70px] px-1">
-              {activeSession.name}
-            </span>
-            <span className="text-[8px] text-emerald-400">
-              {activeSession.involvedAgents.length} agents
-            </span>
+            <motion.div
+              className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-2"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </motion.div>
+            <p className="text-xs font-semibold text-zinc-200 mb-1 font-display">
+              Pick a highlighted agent
+            </p>
+            <p className="text-[10px] text-zinc-500 leading-relaxed">
+              Chat with your team to refine the project, then request deliveries
+            </p>
           </motion.div>
-        )}
+        ) : null}
       </div>
 
-      {/* Agent cards and bubbles */}
-      {agents.map((agent) => {
+      {/* Agent cards and activity bubbles */}
+      {agents.map((agent, i) => {
         const pos = agentPositions[agent.id];
         if (!pos) return null;
 
         const activity = getAgentActivity(agent.id);
         const bubblePosition = getBubblePosition(pos.angle);
         const bubbleOffset = getBubbleOffset(bubblePosition);
-        const isChatOpen = chatAgent === agent.id;
         const isThinking = agent.status === 'thinking';
+        const isSelected = selectedAgent?.id === agent.id;
+        const isInvolved = activeSession?.involvedAgents.includes(agent.id) ?? false;
+        const shouldDim = activeSession && !isInvolved && !isSelected;
 
         return (
-          <div
+          <motion.div
             key={agent.id}
             className="absolute"
             style={{
               left: `${pos.x}%`,
               top: `${pos.y}%`,
               transform: 'translate(-50%, -50%)',
-              zIndex: isChatOpen ? 30 : agent.status !== 'idle' ? 20 : 10,
+              zIndex: isSelected ? 25 : isInvolved ? 15 : agent.status !== 'idle' ? 20 : 10,
+              opacity: shouldDim ? 0.3 : 1,
+              filter: shouldDim ? 'grayscale(0.8)' : 'none',
+              transition: 'opacity 0.3s, filter 0.3s',
+            }}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: shouldDim ? 0.3 : 1 }}
+            transition={{
+              delay: 0.1 + i * 0.04,
+              duration: 0.4,
+              ease: [0.22, 1, 0.36, 1],
             }}
           >
-            {/* Speech bubble for activity (when not chatting) */}
+            {/* Speech bubble for activity */}
             <AnimatePresence>
-              {activity && !isChatOpen && agent.status !== 'waiting' && (
+              {activity && agent.status !== 'waiting' && (
                 <div
                   className="absolute z-30"
                   style={{
@@ -335,37 +375,17 @@ export function AgentCircle() {
               )}
             </AnimatePresence>
 
-            {/* Chat bubble (positioned to the left) */}
-            <AnimatePresence>
-              {isChatOpen && (
-                <AgentChatBubble
-                  agent={agent}
-                  mode={chatMode}
-                  onClose={() => setChatAgent(null)}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Agent card */}
+            {/* Agent card — single click to select */}
             <AgentCard
               agent={agent}
-              isSelected={chatAgent === agent.id}
-              onClick={() => setDetailAgent(agent)}
-              onChatClick={() => openChat(agent.id, 'chat')}
-              onJobClick={() => openChat(agent.id, 'job')}
-              showButtons={agent.status === 'idle' || agent.status === 'waiting'}
+              isSelected={isSelected}
+              onClick={() => setSelectedAgent(isSelected ? null : agent)}
             />
-          </div>
+          </motion.div>
         );
       })}
 
-      {/* Agent detail modal */}
-      {detailAgent && (
-        <AgentDetailModal
-          agent={detailAgent}
-          onClose={() => setDetailAgent(null)}
-        />
-      )}
+      {/* Agent detail modal — removed, click now selects for chat */}
     </div>
   );
 }

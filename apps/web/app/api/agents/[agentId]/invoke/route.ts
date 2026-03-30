@@ -109,6 +109,24 @@ async function invokeViaCLI(
   });
 }
 
+const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+
+function getModel(config: Record<string, unknown>): string {
+  return (config.model as string) || DEFAULT_MODEL;
+}
+
+function formatContext(context?: Record<string, unknown>): string {
+  if (!context) return '';
+  const otherAgents = context.otherAgents as Record<string, string> | undefined;
+  if (otherAgents && Object.keys(otherAgents).length > 0) {
+    const summaries = Object.entries(otherAgents)
+      .map(([agentId, summary]) => `### ${agentId}\n${summary}`)
+      .join('\n\n');
+    return `\n\n## Context from other specialists\n\n${summaries}\n\n---\n\n`;
+  }
+  return '';
+}
+
 async function invokeViaAPI(
   config: Record<string, unknown>,
   systemPrompt: string,
@@ -120,6 +138,8 @@ async function invokeViaAPI(
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
+  const contextBlock = formatContext(context);
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -128,15 +148,13 @@ async function invokeViaAPI(
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-20250514',
-      max_tokens: 8192,
+      model: getModel(config),
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [
         {
           role: 'user',
-          content: context
-            ? `Context: ${JSON.stringify(context)}\n\nTask: ${prompt}`
-            : prompt,
+          content: `${contextBlock}${prompt}`,
         },
       ],
     }),
@@ -181,16 +199,14 @@ function invokeViaAPIStreaming(
             'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
-            model: 'claude-opus-4-20250514',
-            max_tokens: 8192,
+            model: getModel(config),
+            max_tokens: 4096,
             stream: true,
             system: systemPrompt,
             messages: [
               {
                 role: 'user',
-                content: context
-                  ? `Context: ${JSON.stringify(context)}\n\nTask: ${prompt}`
-                  : prompt,
+                content: `${formatContext(context)}${prompt}`,
               },
             ],
           }),

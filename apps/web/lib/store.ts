@@ -232,6 +232,8 @@ interface ShipWithAIState {
   initializeFromUseCase: (useCaseId: UseCaseId, answers: Record<string, string | string[] | null>) => void;
 
   // Hydration
+  resumeProject: (projectId: string) => Promise<void>;
+  loadProjectsFromApi: () => Promise<void>;
   loadSessionFromApi: (sessionId: string) => Promise<void>;
   loadSessionsFromApi: () => Promise<void>;
 }
@@ -677,11 +679,104 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
       onboardingStep: null,
     }));
 
-    // Persist
-    syncToApi('/api/sessions', { id: sessionId, name: session.name, description: brief });
+    // Persist project with use-case metadata
+    syncToApi('/api/projects', {
+      id: projectId,
+      name: config.label,
+      description: brief,
+      status: 'planning',
+      metadata: {
+        useCaseId,
+        answers,
+        githubMode,
+        agents: config.agents,
+      },
+    });
+
+    // Persist session linked to project
+    syncToApi('/api/sessions', {
+      id: sessionId,
+      name: session.name,
+      description: brief,
+      projectId,
+      involvedAgents: config.agents,
+    });
   },
 
   // Hydration from persistence API
+  resumeProject: async (projectId) => {
+    try {
+      // Fetch all data first, then apply as a single state update
+      const stateUpdate: Partial<ShipWithAIState> = {
+        activeProjectId: projectId,
+      };
+
+      // Load project metadata
+      const projRes = await fetch(`/api/projects?limit=50`);
+      const projData = await projRes.json();
+      const project = projData.success && projData.projects?.find((p: { id: string }) => p.id === projectId);
+
+      if (project?.metadata?.useCaseId) {
+        stateUpdate.activeUseCase = project.metadata.useCaseId as UseCaseId;
+        stateUpdate.useCaseAnswers = project.metadata.answers ?? {};
+        stateUpdate.githubMode = project.metadata.githubMode ?? null;
+      }
+
+      // Load the latest session for this project
+      const sesRes = await fetch(`/api/sessions?projectId=${projectId}&limit=1`);
+      const sesData = await sesRes.json();
+      if (sesData.success && sesData.sessions?.[0]) {
+        const s = sesData.sessions[0];
+        stateUpdate.activeSession = {
+          id: s.id,
+          name: s.name,
+          description: s.description,
+          status: s.status,
+          involvedAgents: s.involvedAgents ?? [],
+          context: s.context ?? {},
+          deliveryRequests: s.deliveryRequests ?? [],
+          createdAt: s.createdAt,
+          updatedAt: s.updatedAt,
+        };
+
+        // Load chat messages for this session
+        const msgRes = await fetch(`/api/sessions/${s.id}/messages`);
+        const msgData = await msgRes.json();
+        stateUpdate.chatMessages = (msgData.success && msgData.messages?.length)
+          ? msgData.messages.map((m: Record<string, unknown>) => ({
+              id: m.id as string,
+              role: m.role as string,
+              agentId: m.agentId as string | undefined,
+              content: m.content as string,
+              timestamp: m.timestamp as number,
+              isQuestion: m.isQuestion as boolean | undefined,
+              options: m.options as string[] | undefined,
+            }))
+          : [];
+      }
+
+      // Single atomic state update — one re-render
+      set(stateUpdate as Partial<ShipWithAIState>);
+    } catch {}
+  },
+  loadProjectsFromApi: async () => {
+    try {
+      const res = await fetch('/api/projects?limit=20');
+      const data = await res.json();
+      if (data.success && data.projects) {
+        const projects: Project[] = data.projects.map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          name: p.name as string,
+          description: p.description as string | undefined,
+          status: p.status as Project['status'],
+          createdAt: p.createdAt as number,
+        }));
+        set((state) => ({
+          projects: projects.length > 0 ? projects : state.projects,
+        }));
+      }
+    } catch {}
+  },
   loadSessionFromApi: async (sessionId) => {
     try {
       const res = await fetch(`/api/sessions/${sessionId}`);

@@ -1,6 +1,7 @@
 {
   "id": "solidity-developer",
   "name": "ShipWith.AI: Solidity Developer",
+  "model": "claude-opus-4-20250514",
   "description": "Smart contract development specialist writing secure, gas-optimized Solidity code. Expert in ERC standards, DeFi patterns, and upgradeable contracts.",
   "capabilities": [
     "solidity",

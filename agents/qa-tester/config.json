@@ -1,6 +1,7 @@
 {
   "id": "qa-tester",
   "name": "ShipWith.AI: QA Tester",
+  "model": "claude-sonnet-4-20250514",
   "description": "Quality assurance specialist performing end-to-end testing, integration testing, and exploratory testing. Expert in test automation and Web3 testing patterns.",
   "capabilities": [
     "e2e-testing",

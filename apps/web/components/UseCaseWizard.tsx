@@ -65,7 +65,7 @@ export function UseCaseWizard({ config }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+    <div className="min-h-screen bg-[#060608] bg-noise flex flex-col relative overflow-hidden">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 md:px-6 py-4">
         <button
@@ -90,9 +90,9 @@ export function UseCaseWizard({ config }: Props) {
             key={i}
             className={`h-1.5 rounded-full transition-all duration-300 ${
               i === currentStep
-                ? 'w-8 bg-white'
+                ? 'w-8 bg-gradient-to-r from-emerald-400 to-cyan-400'
                 : i < currentStep
-                ? 'w-1.5 bg-zinc-500'
+                ? 'w-1.5 bg-emerald-600'
                 : 'w-1.5 bg-zinc-800'
             }`}
           />
@@ -115,7 +115,7 @@ export function UseCaseWizard({ config }: Props) {
               <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider">
                 {config.label}
               </p>
-              <h2 className="text-xl md:text-2xl font-semibold text-white mb-6">
+              <h2 className="text-xl md:text-2xl font-bold text-white mb-6 font-display">
                 {step.question}
               </h2>
 
@@ -225,9 +225,9 @@ export function UseCaseWizard({ config }: Props) {
           <button
             onClick={next}
             disabled={!canContinue}
-            className={`w-full py-3.5 rounded-xl text-sm font-medium transition-all ${
+            className={`w-full py-3.5 rounded-xl text-sm font-semibold transition-all ${
               canContinue
-                ? 'bg-white text-black hover:bg-zinc-200'
+                ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400 shadow-lg shadow-emerald-900/20'
                 : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
             }`}
           >

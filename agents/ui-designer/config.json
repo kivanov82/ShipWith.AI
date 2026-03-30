@@ -1,6 +1,7 @@
 {
   "id": "ui-designer",
   "name": "ShipWith.AI: UI Designer",
+  "model": "claude-opus-4-20250514",
   "description": "Visual design specialist creating beautiful, consistent UI designs. Expert in design systems, component libraries, and modern Web3 aesthetics.",
   "capabilities": [
     "visual-design",

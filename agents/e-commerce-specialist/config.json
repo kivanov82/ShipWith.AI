@@ -1,6 +1,7 @@
 {
   "id": "e-commerce-specialist",
   "name": "ShipWith.AI: E-commerce Specialist",
+  "model": "claude-sonnet-4-20250514",
   "description": "E-commerce setup specialist. Configures online stores with product catalogs, inventory management, shipping, and store optimization for maximum conversions.",
   "capabilities": [
     "shopify-setup",
