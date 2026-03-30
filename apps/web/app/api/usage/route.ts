@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirestoreStore } from '@shipwithai/core/firestore-store';
 
+const isFreeMode = process.env.SHIPWITHAI_FREE_MODE === 'true';
+
 // Free tier limits
 const LIMITS = {
-  anonymous: 10,      // No wallet connected
-  connected: 25,      // Wallet connected, no balance
-  funded: Infinity,   // Wallet has USDC balance
+  anonymous: isFreeMode ? Infinity : 10,
+  connected: isFreeMode ? Infinity : 25,
+  funded: Infinity,
 };
 
 export async function GET(request: NextRequest) {

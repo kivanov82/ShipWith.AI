@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { isFreeMode } from './store';
 
 const SESSION_TOKEN_KEY = 'shipwithai-session-token';
 
@@ -25,9 +26,9 @@ function getSessionToken(): string {
 export function useUsage(walletAddress?: string, hasFunds?: boolean) {
   const [usage, setUsage] = useState<UsageState>({
     chatCount: 0,
-    tier: 'anonymous',
-    limit: 10,
-    remaining: 10,
+    tier: isFreeMode ? 'funded' : 'anonymous',
+    limit: isFreeMode ? Infinity : 10,
+    remaining: isFreeMode ? Infinity : 10,
     isLimitReached: false,
   });
 

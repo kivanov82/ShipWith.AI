@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { nanoid } from 'nanoid';
 import { type UseCaseId, USE_CASES, GITHUB_STEP } from './use-cases';
 
+export const isFreeMode = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('free') === 'true' ||
+    process.env.NEXT_PUBLIC_SHIPWITHAI_FREE_MODE === 'true'
+  : process.env.NEXT_PUBLIC_SHIPWITHAI_FREE_MODE === 'true';
+
 // Fire-and-forget persistence helpers
 const syncToApi = (url: string, data: unknown) => {
   fetch(url, {
@@ -515,8 +520,8 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
       id: deliveryId,
       agentId,
       description,
-      estimatedCost,
-      status: 'pending',
+      estimatedCost: isFreeMode ? '$0.00' : estimatedCost,
+      status: isFreeMode ? 'paid' : 'pending',
       createdAt: Date.now(),
     };
     set((state) => ({
@@ -548,8 +553,8 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
           id: deliveryId,
           agentId,
           description: `Deliver based on session context`,
-          estimatedCost: agent.pricing.split('-')[1] || agent.pricing, // Use max price estimate
-          status: 'pending',
+          estimatedCost: isFreeMode ? '$0.00' : (agent.pricing.split('-')[1] || agent.pricing),
+          status: isFreeMode ? 'paid' : 'pending',
           createdAt: Date.now(),
         });
       }
