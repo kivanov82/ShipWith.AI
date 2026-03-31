@@ -10,13 +10,16 @@
     "./events": "./src/events.ts",
     "./memory": "./src/memory.ts",
     "./project-store": "./src/project-store.ts",
-    "./firestore-store": "./src/firestore-store.ts"
+    "./firestore-store": "./src/firestore-store.ts",
+    "./github-repo": "./src/github-repo.ts"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@octokit/auth-app": "^8.2.0",
+    "@octokit/rest": "^22.0.1",
     "better-sqlite3": "^9.4.0",
     "nanoid": "^5.0.4"
   },

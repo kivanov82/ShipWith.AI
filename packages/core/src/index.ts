@@ -3,3 +3,4 @@ export * from './types';
 export * from './events';
 export * from './memory';
 export * from './project-store';
+export * from './github-repo';
