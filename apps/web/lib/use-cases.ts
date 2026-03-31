@@ -145,7 +145,7 @@ export const USE_CASES: Record<UseCaseId, UseCaseConfig> = {
     label: 'E-commerce Store',
     tagline: 'Set up my online store',
     icon: 'ShoppingCart',
-    agents: ['pm', 'ui-designer', 'backend-developer', 'marketing', 'e-commerce-specialist', 'payment-integration', 'seo-specialist'],
+    agents: ['pm', 'ui-designer', 'ui-developer', 'backend-developer', 'marketing', 'e-commerce-specialist', 'payment-integration', 'seo-specialist'],
     questions: [
       {
         id: 'products',

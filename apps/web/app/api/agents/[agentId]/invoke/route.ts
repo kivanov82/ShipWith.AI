@@ -11,7 +11,7 @@ export async function POST(
   try {
     const { agentId } = params;
     const body = await request.json();
-    const { prompt, projectId, context } = body;
+    const { prompt, projectId, context, history } = body;
 
     // Check if streaming is requested
     const url = new URL(request.url);
@@ -40,10 +40,10 @@ export async function POST(
     if (mode === 'api') {
       if (stream) {
         // Streaming API mode
-        return invokeViaAPIStreaming(config, systemPrompt, prompt, context);
+        return invokeViaAPIStreaming(config, systemPrompt, prompt, context, history);
       }
       // Use Anthropic API directly
-      const response = await invokeViaAPI(config, systemPrompt, prompt, context);
+      const response = await invokeViaAPI(config, systemPrompt, prompt, context, history);
       return NextResponse.json(response);
     } else {
       // Use Claude CLI (no streaming support yet)
@@ -115,30 +115,71 @@ function getModel(config: Record<string, unknown>): string {
   return (config.model as string) || DEFAULT_MODEL;
 }
 
+interface HistoryMessage {
+  role: 'user' | 'agent';
+  content: string;
+}
+
 function formatContext(context?: Record<string, unknown>): string {
   if (!context) return '';
+  let block = '';
+
+  const team = context.availableTeam as string[] | undefined;
+  if (team && team.length > 0) {
+    block += `\n\n## Your team for this project\nOnly recommend these specialists (no others):\n${team.map((t) => `- ${t}`).join('\n')}\n`;
+  }
+
   const otherAgents = context.otherAgents as Record<string, string> | undefined;
   if (otherAgents && Object.keys(otherAgents).length > 0) {
     const summaries = Object.entries(otherAgents)
       .map(([agentId, summary]) => `### ${agentId}\n${summary}`)
       .join('\n\n');
-    return `\n\n## Context from other specialists\n\n${summaries}\n\n---\n\n`;
+    block += `\n\n## Context from other specialists\n\n${summaries}\n`;
   }
-  return '';
+
+  return block ? `${block}\n---\n\n` : '';
+}
+
+function buildMessages(prompt: string, context?: Record<string, unknown>, history?: HistoryMessage[]): Array<{ role: 'user' | 'assistant'; content: string }> {
+  const contextBlock = formatContext(context);
+  const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
+  // Add conversation history as multi-turn messages
+  if (history && history.length > 0) {
+    // First message gets the context block prepended
+    let firstUserDone = false;
+    for (const msg of history) {
+      const role = msg.role === 'agent' ? 'assistant' as const : 'user' as const;
+      if (role === 'user' && !firstUserDone) {
+        messages.push({ role, content: `${contextBlock}${msg.content}` });
+        firstUserDone = true;
+      } else {
+        messages.push({ role, content: msg.content });
+      }
+    }
+    // Add the new prompt
+    messages.push({ role: 'user', content: prompt });
+  } else {
+    // No history — single message with context
+    messages.push({ role: 'user', content: `${contextBlock}${prompt}` });
+  }
+
+  return messages;
 }
 
 async function invokeViaAPI(
   config: Record<string, unknown>,
   systemPrompt: string,
   prompt: string,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
+  history?: HistoryMessage[]
 ): Promise<{ success: boolean; output: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
-  const contextBlock = formatContext(context);
+  const messages = buildMessages(prompt, context, history);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -151,12 +192,7 @@ async function invokeViaAPI(
       model: getModel(config),
       max_tokens: 4096,
       system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: `${contextBlock}${prompt}`,
-        },
-      ],
+      messages,
     }),
   });
 
@@ -176,7 +212,8 @@ function invokeViaAPIStreaming(
   config: Record<string, unknown>,
   systemPrompt: string,
   prompt: string,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
+  history?: HistoryMessage[]
 ): Response {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -203,12 +240,7 @@ function invokeViaAPIStreaming(
             max_tokens: 4096,
             stream: true,
             system: systemPrompt,
-            messages: [
-              {
-                role: 'user',
-                content: `${formatContext(context)}${prompt}`,
-              },
-            ],
+            messages: buildMessages(prompt, context, history),
           }),
         });
 

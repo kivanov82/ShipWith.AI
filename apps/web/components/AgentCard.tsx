@@ -34,7 +34,7 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
           : 'border-zinc-800/80 hover:border-zinc-600/60 overflow-hidden'}
       `}
       style={{
-        width: 160,
+        width: 180,
         ...(isSelected ? { borderColor: `${agent.color}60` } : {}),
       }}
       initial={{ scale: 0, opacity: 0 }}
@@ -57,39 +57,46 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
 
       {/* Top color accent bar */}
       <div
-        className="h-0.5 w-full rounded-t-xl"
+        className="h-1 w-full rounded-t-xl"
         style={{ background: isSelected
           ? agent.color
           : `linear-gradient(90deg, ${agent.color}, ${agent.color}88)`
         }}
       />
 
-      {/* Active glow (non-selected) */}
+      {/* Active glow (non-selected) — stronger pulse for thinking */}
       {isActive && !isSelected && (
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute -inset-[1px] rounded-xl pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse at center, ${agent.color}15 0%, transparent 70%)`,
+            boxShadow: agent.status === 'thinking'
+              ? `0 0 12px 3px ${agent.color}40, 0 0 3px 1px ${agent.color}25`
+              : `0 0 8px 2px ${agent.color}25`,
+            background: `radial-gradient(ellipse at center, ${agent.color}12 0%, transparent 70%)`,
           }}
-          animate={{ opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ opacity: agent.status === 'thinking' ? [0.3, 1, 0.3] : [0.4, 0.7, 0.4] }}
+          transition={{
+            duration: agent.status === 'thinking' ? 1.2 : 2.5,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
         />
       )}
 
-      <div className="p-2.5 relative z-10">
+      <div className="p-3 relative z-10">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2.5 mb-2">
           <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ring-1 ring-white/10"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ring-1 ring-white/10"
             style={{ backgroundColor: agent.color, color: '#fff' }}
           >
             {agent.avatar}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold text-zinc-100 truncate leading-tight">
+            <div className="text-[13px] font-semibold text-zinc-100 truncate leading-tight">
               {agent.name}
             </div>
-            <div className="text-[9px] text-zinc-500 truncate">
+            <div className="text-[11px] text-zinc-500 truncate">
               {agent.role}
             </div>
           </div>
@@ -98,7 +105,7 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
         {/* Status bar */}
         <div className="flex items-center justify-between">
           <div className={`
-            flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium
+            flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium
             ${agent.status === 'idle' && hasDelivered ? 'bg-emerald-500/15 text-emerald-400' : ''}
             ${agent.status === 'waiting' ? 'bg-cyan-500/15 text-cyan-400' : ''}
             ${agent.status === 'thinking' ? 'bg-amber-500/15 text-amber-400' : ''}
@@ -107,18 +114,17 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
             ${agent.status === 'error' ? 'bg-red-500/15 text-red-400' : ''}
           `}>
             {statusConfig.icon && (
-              <statusConfig.icon className={`w-2.5 h-2.5 ${agent.status === 'thinking' ? 'animate-spin' : ''}`} />
+              <statusConfig.icon className={`w-3 h-3 ${agent.status === 'thinking' ? 'animate-spin' : ''}`} />
             )}
             {!statusConfig.icon && (
               <motion.div
-                className={`w-1.5 h-1.5 rounded-full ${statusConfig.color}`}
+                className={`w-2 h-2 rounded-full ${statusConfig.color}`}
                 animate={isActive ? { scale: [1, 1.4, 1] } : {}}
                 transition={{ duration: 1.2, repeat: Infinity }}
               />
             )}
             <span>{statusConfig.text}</span>
           </div>
-
         </div>
       </div>
     </motion.div>

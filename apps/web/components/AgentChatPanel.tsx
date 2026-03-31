@@ -1,16 +1,113 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Loader2, MessageSquare } from 'lucide-react';
 import { useShipWithAIStore, Agent } from '@/lib/store';
 import { invokeAgent } from '@/lib/agent-client';
 
-interface AgentChatPanelProps {
-  activeAgent: Agent | null;
+/** Render basic markdown: **bold**, *italic*, `code`, and newlines */
+function renderMarkdown(text: string) {
+  // Split by newlines first, then process inline formatting per line
+  return text.split('\n').map((line, lineIdx, arr) => {
+    // Process inline markdown: **bold**, *italic*, `code`
+    const parts: React.ReactNode[] = [];
+    // Regex matches: **bold**, *italic*, `code`, or plain text
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      // Push text before this match
+      if (match.index > lastIndex) {
+        parts.push(line.slice(lastIndex, match.index));
+      }
+
+      if (match[2]) {
+        // **bold**
+        parts.push(<strong key={`${lineIdx}-${match.index}`} className="font-semibold text-zinc-100">{match[2]}</strong>);
+      } else if (match[3]) {
+        // *italic*
+        parts.push(<em key={`${lineIdx}-${match.index}`}>{match[3]}</em>);
+      } else if (match[4]) {
+        // `code`
+        parts.push(<code key={`${lineIdx}-${match.index}`} className="px-1 py-0.5 rounded bg-zinc-700/60 text-emerald-300 text-[12px] font-mono">{match[4]}</code>);
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Remaining text after last match
+    if (lastIndex < line.length) {
+      parts.push(line.slice(lastIndex));
+    }
+
+    // If the line is empty, just return a line break
+    if (parts.length === 0 && line === '') {
+      return lineIdx < arr.length - 1 ? <br key={lineIdx} /> : null;
+    }
+
+    return (
+      <span key={lineIdx}>
+        {parts}
+        {lineIdx < arr.length - 1 && <br />}
+      </span>
+    );
+  });
 }
 
-export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
+interface AgentChatPanelProps {
+  activeAgent: Agent | null;
+  autoStartAgent?: boolean;
+  onSwitchAgent?: (agentId: string, autoStart?: boolean) => void;
+}
+
+// Map of agent display names to IDs for detecting handoff suggestions
+const AGENT_NAME_TO_ID: Record<string, string> = {
+  'ui designer': 'ui-designer',
+  'ux analyst': 'ux-analyst',
+  'fe developer': 'ui-developer',
+  'frontend developer': 'ui-developer',
+  'integration dev': 'backend-developer',
+  'backend developer': 'backend-developer',
+  'seo specialist': 'seo-specialist',
+  'marketing': 'marketing',
+  'payment integration': 'payment-integration',
+  'e-commerce specialist': 'e-commerce-specialist',
+  'mobile developer': 'mobile-developer',
+  'infrastructure': 'infrastructure',
+  'qa tester': 'qa-tester',
+  'unit tester': 'unit-tester',
+  'tech writer': 'tech-writer',
+  'solidity dev': 'solidity-developer',
+  'security auditor': 'solidity-auditor',
+  'project manager': 'pm',
+};
+
+function detectSuggestedAgent(text: string, involvedAgents: string[]): string | null {
+  const lower = text.toLowerCase();
+  // Look for patterns like "talk to the UI Designer" or "move on to the E-commerce Specialist"
+  const patterns = [
+    /(?:talk to|move (?:on )?to|hand (?:you )?off to|suggest (?:chatting|speaking|talking) (?:with|to)|let'?s? (?:bring in|involve|move to)|next.*?(?:would be|should be|is)) (?:the |our )?(.+?)(?:\.|,|!|\?|$)/gi,
+    /(?:recommend|suggest) (?:the |our )?(.+?) (?:next|as the next|for this)/gi,
+  ];
+
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(lower)) !== null) {
+      const name = match[1].trim();
+      // Check against known agent names
+      for (const [agentName, agentId] of Object.entries(AGENT_NAME_TO_ID)) {
+        if (name.includes(agentName) && involvedAgents.includes(agentId)) {
+          return agentId;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: AgentChatPanelProps) {
   const {
     chatMessages,
     addChatMessage,
@@ -28,11 +125,15 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
   const [input, setInput] = useState('');
   const [isInvoking, setIsInvoking] = useState(false);
   const [streamingOutput, setStreamingOutput] = useState('');
+  // Track suggested next agent per source agent (survives agent deselect/reselect)
+  const [suggestedHandoffs, setSuggestedHandoffs] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pendingAgentRef = useRef<string | null>(null);
 
-  // All messages across agents, most recent last
-  const allMessages = chatMessages.slice(-30);
+  // Only show messages for the currently selected agent
+  const allMessages = activeAgent
+    ? chatMessages.filter((m) => m.agentId === activeAgent.id).slice(-30)
+    : [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,23 +152,41 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAgent?.id]);
 
-  // Auto-start: when PM is selected and no messages exist, have PM introduce itself
-  const autoStartedRef = useRef<string | null>(null);
+  // Auto-start: PM on fresh session, or any agent after handoff
+  const autoStartedRef = useRef<Set<string>>(new Set());
+
+  // Auto-start agent after handoff
+  useEffect(() => {
+    if (autoStartAgent && activeAgent && activeSession) {
+      const agentMessages = chatMessages.filter((m) => m.agentId === activeAgent.id);
+
+      if (agentMessages.length === 0 && !autoStartedRef.current.has(`${activeSession.id}-${activeAgent.id}`)) {
+        autoStartedRef.current.add(`${activeSession.id}-${activeAgent.id}`);
+        addAgentToSession(activeSession.id, activeAgent.id);
+
+        const prompt = `You've been brought in by the Project Manager to help with this project. Review the context from other specialists below and start by asking the USER 1-2 specific questions relevant to your expertise. Be direct and get to the point — the user has already discussed the general vision with the PM.`;
+        addChatMessage({ role: 'user', content: `The PM has brought you in to help with this project.`, agentId: activeAgent.id });
+        handleRealInvocation(activeAgent, prompt);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAgent?.id]);
+
+  // PM auto-start on fresh session
   useEffect(() => {
     if (
       activeAgent?.id === 'pm' &&
       activeSession &&
       chatMessages.length === 0 &&
       !isInvoking &&
-      autoStartedRef.current !== activeSession.id
+      !autoStartedRef.current.has(`${activeSession.id}-pm`)
     ) {
-      autoStartedRef.current = activeSession.id;
+      autoStartedRef.current.add(`${activeSession.id}-pm`);
       const brief = activeSession.description || '';
       if (brief) {
-        // Send the project brief as an automatic first message from the user
         addChatMessage({ role: 'user', content: `Here's my project brief:\n\n${brief}`, agentId: 'pm' });
         addAgentToSession(activeSession.id, 'pm');
-        handleRealInvocation(activeAgent, `The user just completed the project wizard. Here is their project brief:\n\n${brief}\n\nIntroduce yourself briefly, summarize what you understood from their brief, and ask 1-2 clarifying questions to get started.`);
+        handleRealInvocation(activeAgent, `The user just completed the project wizard. Here is their project brief:\n\n${brief}\n\nIntroduce yourself briefly, summarize what you understood from their brief, then ask the USER 1-2 specific clarifying questions about their project. Do NOT delegate to other agents yet — your job right now is to understand the user's vision by talking to THEM directly.`);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,16 +228,33 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
 
     const invocationId = startInvocation(agent.id, prompt, 'chat');
 
-    // Build context object including other agents' summaries
-    const context = otherAgentContext && Object.keys(otherAgentContext).length > 0
-      ? { otherAgents: otherAgentContext }
-      : undefined;
+    // Build context object including other agents' summaries and available team
+    const teamAgents = activeSession?.involvedAgents
+      .filter((id) => id !== agent.id)
+      .map((id) => {
+        const a = agents.find((x) => x.id === id);
+        return a ? `${a.name} (${a.role})` : id;
+      }) ?? [];
+
+    const context: Record<string, unknown> = {};
+    if (otherAgentContext && Object.keys(otherAgentContext).length > 0) {
+      context.otherAgents = otherAgentContext;
+    }
+    if (teamAgents.length > 0) {
+      context.availableTeam = teamAgents;
+    }
+
+    // Build conversation history for this agent
+    const history = chatMessages
+      .filter((m) => m.agentId === agent.id)
+      .map((m) => ({ role: m.role as 'user' | 'agent', content: m.content }));
 
     try {
       await invokeAgent({
         agentId: agent.id,
         prompt,
         context,
+        history,
         stream: true,
         onStream: (chunk) => {
           setStreamingOutput((prev) => prev + chunk);
@@ -137,6 +273,14 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
 
           // Mark that this agent has unsummarized messages
           pendingAgentRef.current = agent.id;
+
+          // Detect if agent is suggesting a handoff to another specialist
+          if (activeSession) {
+            const suggested = detectSuggestedAgent(response.output, activeSession.involvedAgents);
+            if (suggested && suggested !== agent.id) {
+              setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: suggested }));
+            }
+          }
         },
         onError: (error) => {
           failInvocation(invocationId, error.message);
@@ -191,45 +335,51 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
     await handleRealInvocation(activeAgent, option, otherContext);
   };
 
-  // Latest question from active agent
-  const latestQuestion = activeAgent
-    ? chatMessages
-        .filter((m) => m.agentId === activeAgent.id && m.isQuestion)
-        .slice(-1)[0]
-    : null;
+  // Latest unanswered question from active agent
+  const latestQuestion = (() => {
+    if (!activeAgent) return null;
+    const agentMsgs = chatMessages.filter((m) => m.agentId === activeAgent.id);
+    const lastQuestion = agentMsgs.filter((m) => m.isQuestion).slice(-1)[0];
+    if (!lastQuestion) return null;
+    // Check if user replied after this question
+    const userRepliedAfter = agentMsgs.some(
+      (m) => m.role === 'user' && m.timestamp > lastQuestion.timestamp
+    );
+    return userRepliedAfter ? null : lastQuestion;
+  })();
 
   return (
-    <div className="absolute top-4 left-4 z-40 w-80 max-h-[60vh] flex flex-col">
-      <div className="glass rounded-2xl shadow-2xl shadow-black/30 overflow-hidden flex flex-col max-h-full">
+    <div className="w-full flex flex-col">
+      <div className="overflow-hidden flex flex-col max-h-full">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-zinc-800/60 flex items-center gap-2.5 shrink-0">
+        <div className="px-6 py-3 flex items-center gap-3 shrink-0">
           {activeAgent ? (
             <>
               <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ring-1 ring-white/10"
+                className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold"
                 style={{ backgroundColor: activeAgent.color, color: '#fff' }}
               >
                 {activeAgent.avatar}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-zinc-200">{activeAgent.name}</div>
-                <div className="text-[10px] text-zinc-500 truncate">{activeAgent.role}</div>
+                <div className="text-sm font-semibold text-zinc-200">{activeAgent.name}</div>
+                <div className="text-xs text-zinc-500 truncate">{activeAgent.role}</div>
               </div>
             </>
           ) : (
             <>
-              <MessageSquare className="w-4 h-4 text-zinc-600" />
-              <span className="text-xs font-medium text-zinc-400">Select an agent to chat</span>
+              <MessageSquare className="w-5 h-5 text-zinc-600" />
+              <span className="text-sm font-medium text-zinc-400">Select an agent to chat</span>
             </>
           )}
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[120px] max-h-[40vh]">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5 min-h-[160px] max-h-[55vh]">
           {allMessages.length === 0 && !streamingOutput ? (
-            <div className="text-center py-6">
-              <MessageSquare className="w-6 h-6 mx-auto mb-2 text-zinc-700" />
-              <p className="text-[11px] text-zinc-500">
+            <div className="text-center py-8">
+              <MessageSquare className="w-7 h-7 mx-auto mb-3 text-zinc-700" />
+              <p className="text-sm text-zinc-500">
                 {activeAgent
                   ? `Start a conversation with ${activeAgent.name.split(' ')[0]}`
                   : 'Click on any agent to begin'}
@@ -246,29 +396,29 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
                     key={msg.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2`}
+                    className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2.5`}
                   >
                     {!isUser && agent && (
                       <div
-                        className="w-5 h-5 rounded-md flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5"
+                        className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 mt-1"
                         style={{ backgroundColor: agent.color, color: '#fff' }}
                       >
                         {agent.avatar}
                       </div>
                     )}
                     <div
-                      className={`max-w-[85%] rounded-xl px-3 py-2 ${
+                      className={`max-w-[90%] rounded-lg px-4 py-3 ${
                         isUser
-                          ? 'bg-zinc-700/80 text-zinc-100'
-                          : 'bg-zinc-800/60 text-zinc-300'
+                          ? 'bg-zinc-700/60 text-zinc-100 border border-zinc-600/30'
+                          : 'bg-zinc-800/40 text-zinc-300 border border-zinc-700/30'
                       }`}
                     >
                       {!isUser && agent && (
-                        <p className="text-[9px] font-semibold mb-0.5" style={{ color: agent.color }}>
+                        <p className="text-[11px] font-medium mb-1.5 opacity-70" style={{ color: agent.color }}>
                           {agent.name}
                         </p>
                       )}
-                      <p className="text-[11px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <div className="text-[13px] leading-[1.7]">{renderMarkdown(msg.content)}</div>
                     </div>
                   </motion.div>
                 );
@@ -276,21 +426,21 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
 
               {/* Streaming output */}
               {streamingOutput && activeAgent && (
-                <div className="flex justify-start gap-2">
+                <div className="flex justify-start gap-2.5">
                   <div
-                    className="w-5 h-5 rounded-md flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5"
+                    className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 mt-1"
                     style={{ backgroundColor: activeAgent.color, color: '#fff' }}
                   >
                     {activeAgent.avatar}
                   </div>
-                  <div className="max-w-[85%] rounded-xl px-3 py-2 bg-zinc-800/60 text-zinc-300 border border-amber-500/20">
-                    <p className="text-[9px] font-semibold mb-0.5" style={{ color: activeAgent.color }}>
+                  <div className="max-w-[90%] rounded-lg px-4 py-3 bg-zinc-800/40 text-zinc-300 border border-zinc-700/30">
+                    <p className="text-[11px] font-medium mb-1.5 opacity-70" style={{ color: activeAgent.color }}>
                       {activeAgent.name}
                     </p>
-                    <p className="text-[11px] leading-relaxed whitespace-pre-wrap">{streamingOutput}</p>
-                    <div className="flex items-center gap-1 mt-1 text-amber-400">
-                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                      <span className="text-[9px]">Generating...</span>
+                    <div className="text-[13px] leading-[1.7]">{renderMarkdown(streamingOutput)}</div>
+                    <div className="flex items-center gap-1.5 mt-2 text-zinc-500">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span className="text-[11px]">Generating...</span>
                     </div>
                   </div>
                 </div>
@@ -300,13 +450,13 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
 
           {/* Quick-reply options */}
           {latestQuestion?.options && !isInvoking && (
-            <div className="space-y-1 pt-1">
+            <div className="space-y-1.5 pt-2">
               {latestQuestion.options.map((opt, i) => (
                 <button
                   key={i}
                   onClick={() => handleOptionClick(opt)}
                   disabled={isInvoking}
-                  className="block w-full text-left text-[10px] px-2.5 py-1.5 rounded-lg bg-zinc-800/40 border border-zinc-700/50 hover:border-zinc-600 hover:bg-zinc-800/60 text-zinc-300 transition-colors disabled:opacity-50"
+                  className="block w-full text-left text-[13px] px-4 py-2.5 rounded-lg bg-zinc-800/30 border border-zinc-700/30 hover:border-zinc-600/50 hover:bg-zinc-800/50 text-zinc-300 transition-colors disabled:opacity-50"
                 >
                   {opt}
                 </button>
@@ -314,16 +464,60 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
             </div>
           )}
 
+          {/* Handoff button — shown when current agent suggests talking to another */}
+          {activeAgent && suggestedHandoffs[activeAgent.id] && !isInvoking && onSwitchAgent && (() => {
+            const nextAgentId = suggestedHandoffs[activeAgent.id];
+            const nextAgent = agents.find((a) => a.id === nextAgentId);
+            if (!nextAgent) return null;
+            return (
+              <motion.div
+                className="pt-2"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <button
+                  onClick={() => {
+                    // Trigger summarization before switching
+                    summarizeContext(activeAgent);
+                    onSwitchAgent(nextAgentId, true);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all text-left"
+                >
+                  <div
+                    className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0"
+                    style={{ backgroundColor: nextAgent.color, color: '#fff' }}
+                  >
+                    {nextAgent.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-emerald-400">
+                      Continue with {nextAgent.name}
+                    </p>
+                    <p className="text-[11px] text-zinc-500">{nextAgent.role}</p>
+                  </div>
+                  <svg className="w-4 h-4 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </motion.div>
+            );
+          })()}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="p-2.5 border-t border-zinc-800/60 shrink-0">
-          <div className="flex gap-2">
-            <input
-              type="text"
+        {/* Input — Grok-style wide bar */}
+        <form onSubmit={handleSubmit} className="px-4 pb-4 pt-2 shrink-0">
+          <div className="relative flex items-end bg-zinc-800/50 border border-zinc-700/40 rounded-xl hover:border-zinc-600/50 focus-within:border-zinc-500/60 transition-colors">
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
               placeholder={
                 !activeAgent
                   ? 'Select an agent first...'
@@ -332,25 +526,24 @@ export function AgentChatPanel({ activeAgent }: AgentChatPanelProps) {
                   : `Message ${activeAgent.name.split(' ')[0]}...`
               }
               disabled={isInvoking || !activeAgent}
-              className="flex-1 px-3 py-2 bg-zinc-800/60 border border-zinc-700/50 rounded-xl text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 disabled:opacity-40"
+              rows={1}
+              className="flex-1 px-5 py-3.5 bg-transparent text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none disabled:opacity-40 resize-none leading-relaxed"
             />
             <button
               type="submit"
               disabled={!input.trim() || isInvoking || !activeAgent}
-              className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 text-white rounded-xl transition-all"
+              className="m-2 p-2 rounded-lg bg-zinc-100 hover:bg-white disabled:bg-zinc-700 disabled:text-zinc-500 text-zinc-900 transition-all shrink-0"
             >
               {isInvoking ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-4 h-4" />
               )}
             </button>
           </div>
-          {activeAgent && (
-            <div className="mt-1.5 text-[9px] text-zinc-600">
-              {activeSession
-                ? `Building context for "${activeSession.name}"`
-                : 'Free chat — start a session to track context'}
+          {activeAgent && activeSession && (
+            <div className="mt-2 px-1 text-[11px] text-zinc-600">
+              Building context for &ldquo;{activeSession.name}&rdquo;
             </div>
           )}
         </form>
