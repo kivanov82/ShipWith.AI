@@ -82,7 +82,7 @@ async function parseStreamingResponse(
               input: {},
             };
             currentToolInput = '';
-            callbacks?.onToolCall?.(event.content_block.name, {});
+            // onToolCall fires at content_block_stop with full input (not here)
           }
           break;
         }
@@ -102,13 +102,17 @@ async function parseStreamingResponse(
 
         case 'content_block_stop': {
           const block = content[event.index];
-          if (block?.type === 'tool_use' && currentToolInput) {
-            try {
-              block.input = JSON.parse(currentToolInput);
-            } catch {
-              block.input = { raw: currentToolInput };
+          if (block?.type === 'tool_use') {
+            if (currentToolInput) {
+              try {
+                block.input = JSON.parse(currentToolInput);
+              } catch {
+                block.input = { raw: currentToolInput };
+              }
+              currentToolInput = '';
             }
-            currentToolInput = '';
+            // Fire onToolCall now with the complete parsed input
+            callbacks?.onToolCall?.(block.name, block.input);
           }
           break;
         }
