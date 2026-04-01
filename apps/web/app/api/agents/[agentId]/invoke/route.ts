@@ -18,6 +18,8 @@ export async function POST(
     const body = await request.json();
     const { prompt, projectId, context, history } = body;
 
+    console.log(`[invoke] Agent: ${agentId}, ProjectId: ${projectId || 'NONE'}`);
+
     // Check if streaming is requested
     const url = new URL(request.url);
     const stream = url.searchParams.get('stream') === 'true';
@@ -47,7 +49,7 @@ export async function POST(
 
       // Derive repo name from project ID (convention: kivanov82/shipwithai-{projectId})
       const repoOwner = process.env.GITHUB_REPO_OWNER || 'kivanov82';
-      const repoFullName = projectId ? `${repoOwner}/shipwithai-${projectId}` : undefined;
+      const repoFullName = projectId ? `${repoOwner}/shipwithai-${projectId.toLowerCase()}` : undefined;
 
       // Build agent run config
       const runConfig: AgentRunConfig = {
