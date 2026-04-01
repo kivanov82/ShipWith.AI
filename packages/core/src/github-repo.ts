@@ -85,7 +85,7 @@ export async function createProjectRepo(
     const response = await patOctokit.repos.createForAuthenticatedUser({
       name: repoName,
       description: description || `ShipWith.AI project: ${projectName}`,
-      private: true,
+      private: false,
       auto_init: true,
     });
     data = response.data;
@@ -94,7 +94,7 @@ export async function createProjectRepo(
     const response = await octokit.repos.createForAuthenticatedUser({
       name: repoName,
       description: description || `ShipWith.AI project: ${projectName}`,
-      private: true,
+      private: false,
       auto_init: true,
     });
     data = response.data;
