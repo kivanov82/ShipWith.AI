@@ -76,14 +76,39 @@ export async function createProjectRepo(
   // Slugify project name for repo name
   const repoName = `shipwithai-${slugify(projectName || projectId)}`;
 
-  // GitHub App installations create repos via the authenticated user endpoint
-  // The installation token acts on behalf of the account it's installed on
-  const { data } = await octokit.repos.createForAuthenticatedUser({
-    name: repoName,
-    description: description || `ShipWith.AI project: ${projectName}`,
-    private: true,
-    auto_init: true,
-  });
+  // GitHub App installations use the installation endpoint for repo creation
+  // Falls back to createForAuthenticatedUser for PAT-based auth
+  let data;
+  try {
+    const response = await octokit.request('POST /repos', {
+      name: repoName,
+      description: description || `ShipWith.AI project: ${projectName}`,
+      private: true,
+      auto_init: true,
+    });
+    data = response.data;
+  } catch {
+    // Fallback: try creating under the configured owner as an org repo
+    try {
+      const response = await octokit.repos.createInOrg({
+        org: config.repoOwner,
+        name: repoName,
+        description: description || `ShipWith.AI project: ${projectName}`,
+        private: true,
+        auto_init: true,
+      });
+      data = response.data;
+    } catch {
+      // Last resort: createForAuthenticatedUser (works with PAT)
+      const response = await octokit.repos.createForAuthenticatedUser({
+        name: repoName,
+        description: description || `ShipWith.AI project: ${projectName}`,
+        private: true,
+        auto_init: true,
+      });
+      data = response.data;
+    }
+  }
 
   const repoInfo: RepoInfo = {
     owner: data.owner.login,
