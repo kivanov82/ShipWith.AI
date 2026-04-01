@@ -85,7 +85,7 @@ export async function createProjectRepo(
     auto_init: true,
   });
 
-  return {
+  const repoInfo: RepoInfo = {
     owner: data.owner.login,
     name: data.name,
     fullName: data.full_name,
@@ -93,6 +93,15 @@ export async function createProjectRepo(
     cloneUrl: data.clone_url,
     defaultBranch: data.default_branch,
   };
+
+  // Scaffold CLAUDE.md hierarchy in the new repo
+  try {
+    await scaffoldClaudeMd(repoInfo.fullName, projectName, description);
+  } catch (err) {
+    console.error('Failed to scaffold CLAUDE.md (non-fatal):', err);
+  }
+
+  return repoInfo;
 }
 
 /**
@@ -291,4 +300,93 @@ function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .substring(0, 60);
+}
+
+/**
+ * Scaffold CLAUDE.md hierarchy in a newly created repo.
+ * Makes the project AI-ready with conventions, rules, and structure docs.
+ */
+async function scaffoldClaudeMd(
+  repoFullName: string,
+  projectName: string,
+  description?: string
+): Promise<void> {
+  const rootClaudeMd = `# ${projectName}
+
+${description || 'A project built by ShipWith.AI agents.'}
+
+## Tech Stack
+
+<!-- Updated by agents as technology decisions are made -->
+- **Framework**: TBD
+- **Language**: TypeScript
+- **Styling**: TBD
+- **Deployment**: TBD
+
+## Conventions
+
+### Code Style
+- Use TypeScript strict mode
+- Prefer named exports over default exports
+- Use \`interface\` for object shapes, \`type\` for unions
+- Keep files under 300 lines — split when larger
+
+### Git Workflow
+- Never commit directly to main
+- Use feature branches: \`feature/<agent-or-author>/<description>\`
+- All PRs are automatically reviewed before merge
+
+### File Structure
+\`\`\`
+src/
+  components/    # React components
+  lib/           # Utilities and helpers
+  app/           # Next.js app router pages
+  api/           # API routes
+  types/         # Shared type definitions
+\`\`\`
+
+## API Conventions
+
+- All API routes return \`{ success: boolean, data?: T, error?: string }\`
+- Use proper HTTP status codes (400 for validation, 404 for not found, 500 for server errors)
+- Validate all inputs at the route handler level
+`;
+
+  const rulesTestMd = `---
+globs: "**/*.test.ts,**/*.test.tsx,**/*.spec.ts"
+---
+
+# Test File Rules
+
+- Use Vitest as the test runner
+- Follow Arrange-Act-Assert pattern
+- Mock external dependencies, not internal logic
+- Test file lives next to the file it tests
+- Name: \`ComponentName.test.tsx\` or \`utils.test.ts\`
+`;
+
+  const rulesApiMd = `---
+globs: "src/app/api/**/*.ts,src/api/**/*.ts"
+---
+
+# API Route Rules
+
+- Return consistent response shape: \`{ success, data?, error? }\`
+- Validate request body before processing
+- Handle errors with try/catch — never let unhandled errors crash
+- Log errors server-side, return safe messages to client
+`;
+
+  await commitFiles(
+    repoFullName,
+    [
+      { path: 'CLAUDE.md', content: rootClaudeMd },
+      { path: '.claude/rules/tests.md', content: rulesTestMd },
+      { path: '.claude/rules/api-routes.md', content: rulesApiMd },
+    ],
+    'Scaffold CLAUDE.md hierarchy for AI-ready development',
+    'ShipWith.AI',
+    'main'
+  );
 }

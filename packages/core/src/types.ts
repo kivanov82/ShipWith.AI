@@ -210,9 +210,17 @@ export interface ToolExecutionContext {
   repoFullName?: string;
 }
 
+export type ToolErrorCategory =
+  | 'transient'    // Timeouts, service unavailability — retryable automatically
+  | 'validation'   // Bad input, wrong format — agent should fix input and retry
+  | 'business'     // Policy violation, limit exceeded — not retryable, alternative workflow needed
+  | 'permission';  // Access denied — escalation required
+
 export interface ToolExecutionResult {
   content: string;
   isError?: boolean;
+  errorCategory?: ToolErrorCategory;
+  isRetryable?: boolean;
   artifacts?: Artifact[];
 }
 
@@ -233,6 +241,7 @@ export interface AgentRunConfig {
   tools?: ToolDefinition[];
   toolChoice?: ToolChoiceParam;
   toolExecutor?: ToolExecutor;
+  hooks?: ToolHooks;
   maxTokens?: number;
   maxIterations?: number;
   projectId?: string;
@@ -254,6 +263,31 @@ export interface ToolCallLog {
   input: Record<string, unknown>;
   output: string;
   isError: boolean;
+}
+
+// --- Tool Execution Hooks ---
+
+/**
+ * PreToolUse hook — runs before a tool is executed.
+ * Return { allow: false, reason: "..." } to block execution.
+ */
+export interface PreToolUseHook {
+  (toolName: string, input: Record<string, unknown>, context: ToolExecutionContext):
+    Promise<{ allow: boolean; reason?: string }>;
+}
+
+/**
+ * PostToolUse hook — runs after a tool is executed.
+ * Can modify the result (e.g., sanitize output, add logging).
+ */
+export interface PostToolUseHook {
+  (toolName: string, input: Record<string, unknown>, result: ToolExecutionResult, context: ToolExecutionContext):
+    Promise<ToolExecutionResult>;
+}
+
+export interface ToolHooks {
+  preToolUse?: PreToolUseHook[];
+  postToolUse?: PostToolUseHook[];
 }
 
 // Streaming callback types

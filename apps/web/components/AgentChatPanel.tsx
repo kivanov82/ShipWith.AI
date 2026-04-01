@@ -243,6 +243,10 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
     if (teamAgents.length > 0) {
       context.availableTeam = teamAgents;
     }
+    // Include persistent project facts if available
+    if (activeSession?.projectFacts) {
+      context.projectFacts = activeSession.projectFacts;
+    }
 
     // Build conversation history for this agent
     const history = chatMessages

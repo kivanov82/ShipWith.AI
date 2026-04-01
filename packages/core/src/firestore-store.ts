@@ -133,6 +133,10 @@ export class FirestoreStore {
     await this.db.collection('sessions').doc(id).update({ context, updatedAt: Date.now() });
   }
 
+  async updateSession(id: string, updates: Partial<StoredSession>): Promise<void> {
+    await this.db.collection('sessions').doc(id).update({ ...updates, updatedAt: Date.now() });
+  }
+
   // ---- Chat Messages ----
 
   async saveChatMessage(message: Omit<StoredChatMessage, 'id' | 'timestamp'> & { id?: string; timestamp?: number }): Promise<StoredChatMessage> {

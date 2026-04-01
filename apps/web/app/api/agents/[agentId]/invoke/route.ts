@@ -6,6 +6,7 @@ import { runAgent } from '@shipwithai/core/src/agent-runner';
 import { runAgentStreaming } from '@shipwithai/core/src/agent-runner-streaming';
 import type { AgentRunConfig, AgentStreamCallbacks } from '@shipwithai/core/src/types';
 import { getToolRegistry } from '@shipwithai/core/src/tools';
+import { getDefaultHooks } from '@shipwithai/core/src/hooks';
 
 // Agent invocation via Claude CLI or API
 export async function POST(
@@ -73,6 +74,9 @@ export async function POST(
       if (invocationMode === 'job' && outputTool) {
         runConfig.toolChoice = { type: 'tool', name: outputTool };
       }
+
+      // Apply default execution hooks (branch protection, command safety, output truncation)
+      runConfig.hooks = getDefaultHooks();
 
       if (stream) {
         // Streaming API mode with agentic loop
@@ -163,21 +167,52 @@ interface HistoryMessage {
   content: string;
 }
 
+// Rough token estimate: ~4 chars per token
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+// Max tokens for context block (leave room for system prompt + conversation)
+const MAX_CONTEXT_TOKENS = 4000;
+
 function formatContext(context?: Record<string, unknown>): string {
   if (!context) return '';
   let block = '';
 
+  // 1. Project facts FIRST (highest priority, placed at top to avoid lost-in-the-middle)
+  const projectFacts = context.projectFacts as string | undefined;
+  if (projectFacts) {
+    block += `\n\n## Project Facts\nThese are the confirmed facts about this project. Do not contradict them.\n\n${projectFacts}\n`;
+  }
+
+  // 2. Team roster
   const team = context.availableTeam as string[] | undefined;
   if (team && team.length > 0) {
     block += `\n\n## Your team for this project\nOnly recommend these specialists (no others):\n${team.map((t) => `- ${t}`).join('\n')}\n`;
   }
 
+  // 3. Agent summaries (token-budgeted — truncate oldest if over budget)
   const otherAgents = context.otherAgents as Record<string, string> | undefined;
   if (otherAgents && Object.keys(otherAgents).length > 0) {
-    const summaries = Object.entries(otherAgents)
-      .map(([agentId, summary]) => `### ${agentId}\n${summary}`)
-      .join('\n\n');
-    block += `\n\n## Context from other specialists\n\n${summaries}\n`;
+    const currentTokens = estimateTokens(block);
+    const budgetForSummaries = MAX_CONTEXT_TOKENS - currentTokens;
+
+    let summariesBlock = '';
+    const entries = Object.entries(otherAgents);
+
+    // Add summaries newest-first until budget exhausted
+    for (const [id, summary] of entries.reverse()) {
+      const entry = `### ${id}\n${summary}\n\n`;
+      if (estimateTokens(summariesBlock + entry) > budgetForSummaries) {
+        summariesBlock += `\n_(...earlier agent context truncated for brevity)_\n`;
+        break;
+      }
+      summariesBlock = entry + summariesBlock; // prepend to maintain order
+    }
+
+    if (summariesBlock) {
+      block += `\n\n## Context from other specialists\n\n${summariesBlock}`;
+    }
   }
 
   return block ? `${block}\n---\n\n` : '';

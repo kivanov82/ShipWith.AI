@@ -73,6 +73,8 @@ export function registerCommandTools(registry: ToolRegistry): void {
         return {
           content: `Command not allowed: "${command}". Allowed prefixes: ${ALLOWED_COMMANDS.join(', ')}`,
           isError: true,
+          errorCategory: 'permission',
+          isRetryable: false,
         };
       }
 

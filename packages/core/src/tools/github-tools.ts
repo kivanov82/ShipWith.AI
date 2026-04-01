@@ -65,9 +65,13 @@ export function registerGitHubTools(registry: ToolRegistry): void {
           .join('\n');
         return { content: `Directory: ${filePath || '/'}\n\n${listing}` };
       } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        const isNotFound = msg.includes('Not Found') || msg.includes('404');
         return {
-          content: `Failed to read ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+          content: `Failed to read ${filePath}: ${msg}`,
           isError: true,
+          errorCategory: isNotFound ? 'validation' as const : 'transient' as const,
+          isRetryable: !isNotFound,
         };
       }
     }
@@ -113,8 +117,10 @@ export function registerGitHubTools(registry: ToolRegistry): void {
 
       if (branch === 'main' || branch === 'master') {
         return {
-          content: 'Error: Cannot commit directly to main/master. Use a feature branch (e.g., "feature/your-agent-id/description").',
+          content: 'Cannot commit directly to main/master. Use a feature branch (e.g., "feature/your-agent-id/description").',
           isError: true,
+          errorCategory: 'business',
+          isRetryable: false,
         };
       }
 

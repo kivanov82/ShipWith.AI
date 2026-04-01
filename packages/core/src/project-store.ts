@@ -113,7 +113,8 @@ export interface StoredSession {
   description?: string;
   status: string;
   involvedAgents: string[];
-  context: Record<string, string>;
+  context: Record<string, string>;       // per-agent summaries
+  projectFacts?: string;                 // persistent project facts block (tech stack, decisions, constraints)
   createdAt: number;
   updatedAt: number;
 }

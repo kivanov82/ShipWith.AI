@@ -130,6 +130,7 @@ export interface Session {
   status: 'context-building' | 'ready-for-delivery' | 'delivering' | 'completed';
   involvedAgents: string[];  // Agent IDs that user has chatted with
   context: Record<string, string>;  // agentId -> context summary from chat
+  projectFacts?: string;            // persistent project facts (tech stack, decisions, constraints)
   deliveryRequests: DeliveryRequest[];
   createdAt: number;
   updatedAt: number;

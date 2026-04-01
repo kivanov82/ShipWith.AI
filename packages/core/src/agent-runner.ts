@@ -139,11 +139,43 @@ export async function runAgent(config: AgentRunConfig): Promise<AgentRunResult> 
 
     for (const toolUse of toolUseBlocks) {
       try {
-        const result = await config.toolExecutor.execute(
+        // Run pre-tool hooks
+        if (config.hooks?.preToolUse) {
+          for (const hook of config.hooks.preToolUse) {
+            const check = await hook(toolUse.name, toolUse.input, executionContext);
+            if (!check.allow) {
+              toolCallsLog.push({
+                iteration,
+                toolName: toolUse.name,
+                input: toolUse.input,
+                output: `Blocked by hook: ${check.reason}`,
+                isError: true,
+              });
+              toolResults.push({
+                type: 'tool_result',
+                tool_use_id: toolUse.id,
+                content: `[BLOCKED] ${check.reason}`,
+                is_error: true,
+              });
+              continue;
+            }
+          }
+          // Skip to next tool if this one was blocked
+          if (toolResults.some((r) => r.tool_use_id === toolUse.id)) continue;
+        }
+
+        let result = await config.toolExecutor.execute(
           toolUse.name,
           toolUse.input,
           executionContext
         );
+
+        // Run post-tool hooks
+        if (config.hooks?.postToolUse) {
+          for (const hook of config.hooks.postToolUse) {
+            result = await hook(toolUse.name, toolUse.input, result, executionContext);
+          }
+        }
 
         toolCallsLog.push({
           iteration,
@@ -153,10 +185,23 @@ export async function runAgent(config: AgentRunConfig): Promise<AgentRunResult> 
           isError: result.isError ?? false,
         });
 
+        // Enrich error content with category info for the agent
+        let resultContent = result.content;
+        if (result.isError && result.errorCategory) {
+          const guidance = result.isRetryable
+            ? 'This error is retryable — try again or adjust your input.'
+            : result.errorCategory === 'business'
+            ? 'This is a policy/business constraint — use an alternative approach.'
+            : result.errorCategory === 'permission'
+            ? 'Access denied — escalate this to the PM or user.'
+            : 'Fix the input and try again.';
+          resultContent = `[${result.errorCategory.toUpperCase()}] ${result.content}\n\n${guidance}`;
+        }
+
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: result.content,
+          content: resultContent,
           is_error: result.isError,
         });
       } catch (error) {
