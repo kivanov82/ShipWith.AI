@@ -80,6 +80,7 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullOutput = '';
+      let buffer = '';
 
       console.log('[agent-client] Starting to read stream...');
 
@@ -90,44 +91,44 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
           break;
         }
 
-        const chunk = decoder.decode(value, { stream: true });
-        console.log('[agent-client] Received chunk:', chunk.substring(0, 100));
+        buffer += decoder.decode(value, { stream: true });
 
-        // Parse SSE events
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              console.log('[agent-client] Received [DONE]');
-              break;
+        // Split on double newline (SSE event boundary)
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || ''; // Keep incomplete last part in buffer
+
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith('data: ')) continue;
+
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            console.log('[agent-client] Received [DONE]');
+            continue;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.text) {
+              fullOutput += parsed.text;
+              onStream(parsed.text);
+            } else if (parsed.type === 'tool_call') {
+              onToolCall?.({ toolName: parsed.toolName, input: parsed.input });
+            } else if (parsed.type === 'tool_result') {
+              onToolResult?.({ toolName: parsed.toolName, result: parsed.result, isError: parsed.isError });
+            } else if (parsed.type === 'done') {
+              // Final summary from agent runner
+              const result: AgentResponse = {
+                success: parsed.success,
+                output: fullOutput,
+                toolCalls: parsed.toolCalls,
+                iterations: parsed.iterations,
+                stopReason: parsed.stopReason,
+              };
+              onComplete?.(result);
+              return result;
             }
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.text) {
-                fullOutput += parsed.text;
-                onStream(parsed.text);
-              } else if (parsed.type === 'tool_call') {
-                onToolCall?.({ toolName: parsed.toolName, input: parsed.input });
-              } else if (parsed.type === 'tool_result') {
-                onToolResult?.({ toolName: parsed.toolName, result: parsed.result, isError: parsed.isError });
-              } else if (parsed.type === 'done') {
-                // Final summary from agent runner
-                const result: AgentResponse = {
-                  success: parsed.success,
-                  output: fullOutput,
-                  toolCalls: parsed.toolCalls,
-                  iterations: parsed.iterations,
-                  stopReason: parsed.stopReason,
-                };
-                onComplete?.(result);
-                return result;
-              }
-            } catch {
-              // Non-JSON data, treat as plain text
-              fullOutput += data;
-              onStream(data);
-            }
+          } catch {
+            // Ignore unparseable events
           }
         }
       }
