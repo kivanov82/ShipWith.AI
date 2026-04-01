@@ -287,12 +287,17 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
           }
         },
         onComplete: (response) => {
-          completeInvocation(invocationId, response.output);
-          addChatMessage({
-            role: 'agent',
-            agentId: agent.id,
-            content: response.output,
-          });
+          const output = response.output || (response.stopReason === 'max_tokens'
+            ? 'I ran out of space generating the response. Let me try with a simpler approach — could you ask me to focus on one specific deliverable at a time?'
+            : '');
+          completeInvocation(invocationId, output);
+          if (output) {
+            addChatMessage({
+              role: 'agent',
+              agentId: agent.id,
+              content: output,
+            });
+          }
           setStreamingOutput('');
           updateAgentStatus(agent.id, 'idle');
 
