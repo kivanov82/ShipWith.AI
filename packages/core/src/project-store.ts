@@ -115,6 +115,8 @@ export interface StoredSession {
   involvedAgents: string[];
   context: Record<string, string>;       // per-agent summaries
   projectFacts?: string;                 // persistent project facts block (tech stack, decisions, constraints)
+  forkedFrom?: string;                   // session ID this was forked from
+  contextTimestamps?: Record<string, number>;  // agentId → timestamp of last summary update
   createdAt: number;
   updatedAt: number;
 }

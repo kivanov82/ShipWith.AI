@@ -125,14 +125,16 @@ Produce the agent summary and updated project facts (separated by ---PROJECT_FAC
       projectFacts = existingFacts; // Keep existing if extraction failed
     }
 
-    // Persist both the agent summary and project facts
+    // Persist agent summary, project facts, and context timestamp
     const updatedContext = { ...existingContext, [agentId]: summary };
     await store.updateSessionContext(params.sessionId, updatedContext);
 
-    // Persist project facts separately
+    const contextTimestamps = { ...(session?.contextTimestamps || {}), [agentId]: Date.now() };
+    const updates: Record<string, unknown> = { contextTimestamps };
     if (projectFacts) {
-      await store.updateSession(params.sessionId, { projectFacts });
+      updates.projectFacts = projectFacts;
     }
+    await store.updateSession(params.sessionId, updates as any);
 
     return NextResponse.json({ success: true, summary, projectFacts, context: updatedContext });
   } catch (error) {

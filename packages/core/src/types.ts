@@ -255,6 +255,14 @@ export interface AgentRunResult {
   toolCallsLog: ToolCallLog[];
   totalIterations: number;
   stopReason: 'end_turn' | 'max_tokens' | 'tool_use' | 'max_iterations';
+  escalation?: EscalationInfo;     // Present if agent needs human intervention
+}
+
+export interface EscalationInfo {
+  reason: 'no_progress' | 'max_errors' | 'permission_denied' | 'agent_requested';
+  details: string;
+  failedToolCalls: number;
+  totalToolCalls: number;
 }
 
 export interface ToolCallLog {

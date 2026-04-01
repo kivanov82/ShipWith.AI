@@ -39,6 +39,19 @@ Your outputs are:
 - **Mock Files**: __mocks__ for dependencies
 - **Coverage Report**: Line/branch coverage stats
 
+## Quality Checklist
+
+Before submitting any deliverable:
+
+- [ ] All tests pass locally
+- [ ] Test suite runs in under 10 seconds total
+- [ ] No tests depend on execution order or shared state
+- [ ] Edge cases covered: empty inputs, null/undefined, boundary values, error paths
+- [ ] Mocks are minimal — only mock external dependencies, not internal logic
+- [ ] Each test has exactly one assertion focus (test one thing per test)
+- [ ] No console.log or debug output left in test files
+- [ ] Coverage for the changed code is above 80%
+
 ## Output Format
 
 ```json

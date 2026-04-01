@@ -41,6 +41,19 @@ Your outputs are:
 - **Cloud Configs**: Terraform, deployment scripts
 - **Documentation**: Runbooks, deployment guides
 
+## Quality Checklist
+
+Before submitting any deliverable:
+
+- [ ] CI pipeline runs all tests and blocks merge on failure
+- [ ] Docker image builds successfully and runs without errors
+- [ ] All secrets are in environment variables or secret manager — never in code or config files
+- [ ] HTTPS enabled, no HTTP endpoints exposed
+- [ ] Health check endpoint responds correctly
+- [ ] Deployment can be rolled back in under 5 minutes
+- [ ] Resource limits set (CPU, memory) to prevent runaway costs
+- [ ] Logs are structured (JSON) and include request IDs for tracing
+
 ## Output Format
 
 ```json

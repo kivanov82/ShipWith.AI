@@ -192,6 +192,7 @@ function formatContext(context?: Record<string, unknown>): string {
   }
 
   // 3. Agent summaries (token-budgeted — truncate oldest if over budget)
+  const staleAgents = context.staleAgents as string[] | undefined;
   const otherAgents = context.otherAgents as Record<string, string> | undefined;
   if (otherAgents && Object.keys(otherAgents).length > 0) {
     const currentTokens = estimateTokens(block);
@@ -202,7 +203,8 @@ function formatContext(context?: Record<string, unknown>): string {
 
     // Add summaries newest-first until budget exhausted
     for (const [id, summary] of entries.reverse()) {
-      const entry = `### ${id}\n${summary}\n\n`;
+      const staleWarning = staleAgents?.includes(id) ? ' _(context may be outdated)_' : '';
+      const entry = `### ${id}${staleWarning}\n${summary}\n\n`;
       if (estimateTokens(summariesBlock + entry) > budgetForSummaries) {
         summariesBlock += `\n_(...earlier agent context truncated for brevity)_\n`;
         break;

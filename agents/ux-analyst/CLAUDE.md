@@ -43,6 +43,17 @@ Your outputs are:
 - **Persona Cards**: User archetypes with goals and frustrations
 - **UX Recommendations**: Best practices for the feature
 
+## Quality Checklist
+
+Before submitting any deliverable:
+
+- [ ] User flows cover happy path AND error/edge cases (not just the ideal journey)
+- [ ] Every screen/step in a flow has a clear user goal and exit criteria
+- [ ] Accessibility considerations noted (screen readers, keyboard navigation, color contrast)
+- [ ] Mobile experience addressed — not just desktop flows
+- [ ] Competitive analysis includes at least 2-3 real competitors (not hypothetical)
+- [ ] Recommendations are prioritized by user impact, not just effort
+
 ## Output Format
 
 ```json

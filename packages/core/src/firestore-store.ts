@@ -137,6 +137,46 @@ export class FirestoreStore {
     await this.db.collection('sessions').doc(id).update({ ...updates, updatedAt: Date.now() });
   }
 
+  /**
+   * Fork a session for divergent exploration.
+   * Creates a new session with the same context and project facts, linked to the original.
+   */
+  async forkSession(sessionId: string, newName: string): Promise<StoredSession> {
+    const original = await this.getSession(sessionId);
+    if (!original) throw new Error(`Session ${sessionId} not found`);
+
+    const { nanoid } = await import('nanoid');
+    const now = Date.now();
+    const forked: StoredSession = {
+      ...original,
+      id: nanoid(),
+      name: newName,
+      description: `Forked from "${original.name}"`,
+      forkedFrom: sessionId,
+      status: original.status,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await this.db.collection('sessions').doc(forked.id).set(forked);
+    return forked;
+  }
+
+  /**
+   * Check which agent summaries are stale (older than the given threshold).
+   * Returns agent IDs whose context summaries may be outdated.
+   */
+  getStaleContextAgents(session: StoredSession, maxAgeMs: number = 30 * 60 * 1000): string[] {
+    const now = Date.now();
+    const timestamps = session.contextTimestamps || {};
+    return Object.entries(session.context)
+      .filter(([agentId]) => {
+        const ts = timestamps[agentId];
+        return !ts || (now - ts) > maxAgeMs;
+      })
+      .map(([agentId]) => agentId);
+  }
+
   // ---- Chat Messages ----
 
   async saveChatMessage(message: Omit<StoredChatMessage, 'id' | 'timestamp'> & { id?: string; timestamp?: number }): Promise<StoredChatMessage> {

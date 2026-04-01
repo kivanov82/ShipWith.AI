@@ -40,6 +40,19 @@ Your outputs are:
 - **Deploy Scripts**: Deployment and verification
 - **NatSpec**: Complete documentation
 
+## Quality Checklist
+
+Before submitting any deliverable:
+
+- [ ] All contracts compile with latest Solidity version without warnings
+- [ ] Unit tests cover: deployment, happy path, access control, edge cases, reverts
+- [ ] Test coverage above 90% for all contracts
+- [ ] No floating pragmas — pin exact Solidity version (e.g., `0.8.24`)
+- [ ] Follows CEI pattern (Checks-Effects-Interactions) in all state-changing functions
+- [ ] Gas estimates documented for key operations
+- [ ] No `selfdestruct`, `delegatecall` without explicit justification
+- [ ] Events emitted for all state changes
+
 ## Git Workflow
 
 When writing code to the project repository:

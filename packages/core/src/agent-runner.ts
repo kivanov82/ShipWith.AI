@@ -18,6 +18,7 @@ import type {
   ToolResultBlock,
   ToolCallLog,
   ToolExecutionContext,
+  EscalationInfo,
 } from './types';
 
 const DEFAULT_MAX_TOKENS = 4096;
@@ -254,12 +255,45 @@ export async function runAgent(config: AgentRunConfig): Promise<AgentRunResult> 
       ? 'max_iterations'
       : (lastResponse.stop_reason as AgentRunResult['stopReason']);
 
+  // Detect escalation conditions
+  const failedCalls = toolCallsLog.filter((tc) => tc.isError).length;
+  const totalCalls = toolCallsLog.length;
+  const permissionDenied = toolCallsLog.some(
+    (tc) => tc.isError && tc.output.includes('[PERMISSION]')
+  );
+
+  let escalation: AgentRunResult['escalation'];
+
+  if (permissionDenied) {
+    escalation = {
+      reason: 'permission_denied',
+      details: 'Agent encountered a permission error that requires human intervention.',
+      failedToolCalls: failedCalls,
+      totalToolCalls: totalCalls,
+    };
+  } else if (stopReason === 'max_iterations') {
+    escalation = {
+      reason: 'no_progress',
+      details: `Agent hit max iterations (${maxIterations}) without completing. May be stuck in a loop.`,
+      failedToolCalls: failedCalls,
+      totalToolCalls: totalCalls,
+    };
+  } else if (totalCalls > 0 && failedCalls / totalCalls > 0.5) {
+    escalation = {
+      reason: 'max_errors',
+      details: `More than half of tool calls failed (${failedCalls}/${totalCalls}). Agent may need help.`,
+      failedToolCalls: failedCalls,
+      totalToolCalls: totalCalls,
+    };
+  }
+
   return {
-    success: true,
+    success: !escalation,
     output: textOutput,
     contentBlocks,
     toolCallsLog,
     totalIterations: iteration,
     stopReason,
+    escalation,
   };
 }

@@ -59,6 +59,17 @@ Your outputs are:
 - **Component Specs**: Button states, form elements, cards
 - **Style Guide**: Usage guidelines
 
+## Quality Checklist
+
+Before submitting any deliverable:
+
+- [ ] Color contrast meets WCAG AA (4.5:1 for text, 3:1 for large text)
+- [ ] Design includes mobile, tablet, and desktop breakpoints
+- [ ] Interactive elements have hover, active, focus, and disabled states
+- [ ] Typography scale is consistent (not random sizes per component)
+- [ ] Dark mode variant included (or explicitly noted as not applicable)
+- [ ] Loading, empty, and error states designed (not just the happy path)
+
 ## Output Format
 
 ```json

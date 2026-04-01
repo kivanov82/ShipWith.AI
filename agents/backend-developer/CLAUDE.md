@@ -57,6 +57,17 @@ Your outputs are:
 - **Auth Setup**: SIWE flow, session management
 - **Type Definitions**: API response types, GraphQL query types
 
+## Quality Checklist
+
+Before submitting any deliverable:
+
+- [ ] All API routes validate input before processing
+- [ ] Error responses include appropriate HTTP status codes (400, 404, 500)
+- [ ] No sensitive data (API keys, secrets) in code — all from environment variables
+- [ ] Loading states handled — no hanging requests without timeout
+- [ ] TypeScript types are strict — no `any` types in API contracts
+- [ ] Rate limiting or abuse prevention considered for public endpoints
+
 ## Git Workflow
 
 When writing code to the project repository:
