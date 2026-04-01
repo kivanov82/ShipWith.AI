@@ -97,6 +97,15 @@ export interface Project {
   createdAt: number;
 }
 
+// Tool call tracking for agentic loop
+export interface ToolCallState {
+  toolName: string;
+  status: 'calling' | 'completed' | 'error';
+  input?: Record<string, unknown>;
+  output?: string;
+  timestamp: number;
+}
+
 // Invocation state for tracking real API calls
 export interface InvocationState {
   id: string;
@@ -108,6 +117,9 @@ export interface InvocationState {
   error?: string;
   startedAt: number;
   cost?: number;  // USDC cost for jobs
+  toolCalls?: ToolCallState[];  // Tool calls made during agentic loop
+  iterations?: number;          // Number of loop iterations
+  stopReason?: string;          // How the loop ended
 }
 
 // Session for multi-agent project context building
@@ -194,7 +206,8 @@ interface ShipWithAIState {
   setRealMode: (enabled: boolean) => void;
   startInvocation: (agentId: string, prompt: string, mode: 'chat' | 'job') => string;
   updateInvocationOutput: (id: string, chunk: string) => void;
-  completeInvocation: (id: string, output?: string, cost?: number) => void;
+  addInvocationToolCall: (id: string, toolName: string, status: ToolCallState['status'], input?: Record<string, unknown>, output?: string) => void;
+  completeInvocation: (id: string, output?: string, cost?: number, iterations?: number, stopReason?: string) => void;
   failInvocation: (id: string, error: string) => void;
   getAgentInvocation: (agentId: string) => InvocationState | null;
 
@@ -422,7 +435,28 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
           : state.invocations[id],
       },
     })),
-  completeInvocation: (id, output, cost) =>
+  addInvocationToolCall: (id, toolName, status, input, output) =>
+    set((state) => {
+      const inv = state.invocations[id];
+      if (!inv) return state;
+      const existing = inv.toolCalls || [];
+      // If status is 'completed' or 'error', update the last matching pending call
+      if (status !== 'calling') {
+        const updated = [...existing];
+        const idx = updated.findLastIndex((tc) => tc.toolName === toolName && tc.status === 'calling');
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], status, output, timestamp: Date.now() };
+        }
+        return { invocations: { ...state.invocations, [id]: { ...inv, toolCalls: updated } } };
+      }
+      return {
+        invocations: {
+          ...state.invocations,
+          [id]: { ...inv, toolCalls: [...existing, { toolName, status, input, timestamp: Date.now() }] },
+        },
+      };
+    }),
+  completeInvocation: (id, output, cost, iterations, stopReason) =>
     set((state) => ({
       invocations: {
         ...state.invocations,
@@ -432,6 +466,8 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
               status: 'completed',
               output: output ?? state.invocations[id].output,
               cost,
+              iterations,
+              stopReason,
             }
           : state.invocations[id],
       },

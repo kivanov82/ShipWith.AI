@@ -49,7 +49,7 @@ function getConfig(): GitHubAppConfig {
   return { appId, privateKey, installationId, repoOwner };
 }
 
-function getOctokit(): Octokit {
+export function getOctokit(): Octokit {
   const config = getConfig();
   return new Octokit({
     authStrategy: createAppAuth,

@@ -61,5 +61,12 @@
     }
   ],
   "walletAddress": null,
-  "erc8004TokenId": null
+  "erc8004TokenId": null,
+  "tools": [
+    "github_write_files",
+    "github_read_files",
+    "vercel_deploy_preview",
+    "read_deliverables"
+  ],
+  "outputTool": "submit_deliverable"
 }

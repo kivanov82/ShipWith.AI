@@ -55,5 +55,12 @@
     }
   ],
   "walletAddress": null,
-  "erc8004TokenId": null
+  "erc8004TokenId": null,
+  "tools": [
+    "github_write_files",
+    "github_read_files",
+    "run_command",
+    "read_deliverables"
+  ],
+  "outputTool": "submit_deliverable"
 }

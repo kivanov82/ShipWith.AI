@@ -17,8 +17,11 @@ export type AgentId =
 export interface AgentConfig {
   id: AgentId;
   name: string;                    // e.g., "ShipWith.AI: FE Developer"
+  model?: string;                  // Claude model override
   description: string;
   capabilities: string[];
+  tools?: string[];                // Tool names available to this agent (4-5 max)
+  outputTool?: string;             // Tool name for structured output (e.g., "submit_deliverable")
   pricing: AgentPricing;
   inputs: AgentIOSpec[];
   outputs: AgentIOSpec[];
@@ -53,6 +56,10 @@ export type EventType =
   | 'task.started'
   | 'task.completed'
   | 'task.failed'
+  | 'task.retrying'
+  | 'task.escalated'
+  | 'workflow.completed'
+  | 'workflow.partial'
   | 'payment.requested'
   | 'payment.sent'
   | 'payment.received'
@@ -150,4 +157,109 @@ export interface InvokeAgentResponse {
   artifacts?: Artifact[];
   events?: AgentEvent[];
   error?: string;
+}
+
+// --- Agentic Loop Types ---
+
+// Content blocks matching Anthropic Messages API
+export interface TextBlock {
+  type: 'text';
+  text: string;
+}
+
+export interface ToolUseBlock {
+  type: 'tool_use';
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export interface ToolResultBlock {
+  type: 'tool_result';
+  tool_use_id: string;
+  content: string | Array<{ type: 'text'; text: string }>;
+  is_error?: boolean;
+}
+
+export type ContentBlock = TextBlock | ToolUseBlock;
+
+// Tool definition matching Anthropic API tools parameter
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  input_schema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+// Tool execution interface
+export interface ToolExecutor {
+  execute(
+    toolName: string,
+    input: Record<string, unknown>,
+    context: ToolExecutionContext
+  ): Promise<ToolExecutionResult>;
+}
+
+export interface ToolExecutionContext {
+  agentId: AgentId;
+  projectId?: string;
+  sessionId?: string;
+  repoFullName?: string;
+}
+
+export interface ToolExecutionResult {
+  content: string;
+  isError?: boolean;
+  artifacts?: Artifact[];
+}
+
+// Agent runner configuration
+export type ToolChoiceParam =
+  | { type: 'auto' }
+  | { type: 'any' }
+  | { type: 'tool'; name: string };
+
+export interface AgentRunConfig {
+  agentId: AgentId;
+  model: string;
+  systemPrompt: string;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string | Array<ContentBlock | ToolResultBlock>;
+  }>;
+  tools?: ToolDefinition[];
+  toolChoice?: ToolChoiceParam;
+  toolExecutor?: ToolExecutor;
+  maxTokens?: number;
+  maxIterations?: number;
+  projectId?: string;
+  sessionId?: string;
+}
+
+export interface AgentRunResult {
+  success: boolean;
+  output: string;                  // Concatenated text from final response
+  contentBlocks: ContentBlock[];   // All content blocks from final response
+  toolCallsLog: ToolCallLog[];
+  totalIterations: number;
+  stopReason: 'end_turn' | 'max_tokens' | 'tool_use' | 'max_iterations';
+}
+
+export interface ToolCallLog {
+  iteration: number;
+  toolName: string;
+  input: Record<string, unknown>;
+  output: string;
+  isError: boolean;
+}
+
+// Streaming callback types
+export interface AgentStreamCallbacks {
+  onText?: (text: string) => void;
+  onToolCall?: (toolName: string, input: Record<string, unknown>) => void;
+  onToolResult?: (toolName: string, result: string, isError: boolean) => void;
+  onIteration?: (iteration: number, stopReason: string) => void;
 }

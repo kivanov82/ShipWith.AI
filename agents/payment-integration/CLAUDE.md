@@ -70,6 +70,15 @@ Payment integrations involve API keys, webhook URLs, environment variables, and 
 - **UI Developer**: Provide checkout UI components, payment form elements, and success/error states
 - **E-commerce Specialist**: Align payment flows with store setup, product pricing, and order management
 
+## Git Workflow
+
+When writing code to the project repository:
+1. **Always use a feature branch** — never commit directly to main
+2. **Branch naming**: `feature/{your-agent-id}/{short-description}` (e.g., `feature/ui-developer/landing-page`)
+3. **Commit messages**: Clear, descriptive, one-line summary
+4. **Open a PR** after committing — the PR will be automatically reviewed by our code review system
+5. Use `github_write_files` tool to commit and `github_create_pr` tool to open the PR
+
 ## Quality Checklist
 
 Before submitting any deliverable:

@@ -223,4 +223,28 @@ export const events = {
       projectId,
       payload: artifact,
     }),
+
+  taskFailed: (source: AgentId, projectId: string, taskId: string, error: string) =>
+    getEventBus().emit({
+      type: 'task.failed',
+      source,
+      projectId,
+      payload: { taskId, error },
+    }),
+
+  taskRetrying: (source: AgentId, projectId: string, taskId: string, attempt: number, maxRetries: number) =>
+    getEventBus().emit({
+      type: 'task.retrying',
+      source,
+      projectId,
+      payload: { taskId, attempt, maxRetries },
+    }),
+
+  taskEscalated: (source: AgentId, projectId: string, taskId: string, reason: string) =>
+    getEventBus().emit({
+      type: 'task.escalated',
+      source,
+      projectId,
+      payload: { taskId, reason },
+    }),
 };

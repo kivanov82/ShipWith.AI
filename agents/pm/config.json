@@ -53,5 +53,14 @@
     }
   ],
   "walletAddress": null,
-  "erc8004TokenId": null
+  "erc8004TokenId": null,
+  "tools": [
+    "create_task",
+    "create_workflow",
+    "get_project_status",
+    "get_workflow_status",
+    "request_handoff",
+    "list_deliverables"
+  ],
+  "outputTool": "submit_plan"
 }

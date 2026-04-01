@@ -1,5 +1,16 @@
 // Client for invoking agents from the UI
 
+export interface ToolCallEvent {
+  toolName: string;
+  input?: Record<string, unknown>;
+}
+
+export interface ToolResultEvent {
+  toolName: string;
+  result: string;
+  isError: boolean;
+}
+
 export interface InvokeOptions {
   agentId: string;
   prompt: string;
@@ -8,6 +19,8 @@ export interface InvokeOptions {
   history?: Array<{ role: 'user' | 'agent'; content: string }>;
   stream?: boolean;
   onStream?: (chunk: string) => void;
+  onToolCall?: (event: ToolCallEvent) => void;
+  onToolResult?: (event: ToolResultEvent) => void;
   onComplete?: (response: AgentResponse) => void;
   onError?: (error: Error) => void;
 }
@@ -16,6 +29,9 @@ export interface AgentResponse {
   success: boolean;
   output: string;
   error?: string;
+  toolCalls?: Array<{ toolName: string; input: Record<string, unknown>; output: string; isError: boolean }>;
+  iterations?: number;
+  stopReason?: string;
 }
 
 export interface AgentConfig {
@@ -35,7 +51,7 @@ export interface AgentConfig {
  * Supports both streaming and non-streaming modes
  */
 export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse> {
-  const { agentId, prompt, projectId, context, history, stream, onStream, onComplete, onError } = options;
+  const { agentId, prompt, projectId, context, history, stream, onStream, onToolCall, onToolResult, onComplete, onError } = options;
 
   const url = `/api/agents/${agentId}/invoke${stream ? '?stream=true' : ''}`;
 
@@ -91,6 +107,21 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
               if (parsed.text) {
                 fullOutput += parsed.text;
                 onStream(parsed.text);
+              } else if (parsed.type === 'tool_call') {
+                onToolCall?.({ toolName: parsed.toolName, input: parsed.input });
+              } else if (parsed.type === 'tool_result') {
+                onToolResult?.({ toolName: parsed.toolName, result: parsed.result, isError: parsed.isError });
+              } else if (parsed.type === 'done') {
+                // Final summary from agent runner
+                const result: AgentResponse = {
+                  success: parsed.success,
+                  output: fullOutput,
+                  toolCalls: parsed.toolCalls,
+                  iterations: parsed.iterations,
+                  stopReason: parsed.stopReason,
+                };
+                onComplete?.(result);
+                return result;
               }
             } catch {
               // Non-JSON data, treat as plain text

@@ -44,5 +44,11 @@
     }
   ],
   "walletAddress": null,
-  "erc8004TokenId": null
+  "erc8004TokenId": null,
+  "tools": [
+    "read_deliverables",
+    "write_document",
+    "web_search"
+  ],
+  "outputTool": "submit_deliverable"
 }

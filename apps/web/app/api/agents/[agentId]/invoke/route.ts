@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import { runAgent } from '@shipwithai/core/src/agent-runner';
+import { runAgentStreaming } from '@shipwithai/core/src/agent-runner-streaming';
+import type { AgentRunConfig, AgentStreamCallbacks } from '@shipwithai/core/src/types';
+import { getToolRegistry } from '@shipwithai/core/src/tools';
 
 // Agent invocation via Claude CLI or API
 export async function POST(
@@ -38,13 +42,52 @@ export async function POST(
     const mode = process.env.SHIPWITHAI_MODE || 'cli';
 
     if (mode === 'api') {
-      if (stream) {
-        // Streaming API mode
-        return invokeViaAPIStreaming(config, systemPrompt, prompt, context, history);
+      const messages = buildMessages(prompt, context, history);
+
+      // Build agent run config
+      const runConfig: AgentRunConfig = {
+        agentId: agentId as AgentRunConfig['agentId'],
+        model: getModel(config),
+        systemPrompt,
+        messages,
+        maxTokens: 4096,
+        maxIterations: 10,
+        projectId,
+      };
+
+      // Load tools from agent config
+      const toolNames = config.tools as string[] | undefined;
+      const outputTool = config.outputTool as string | undefined;
+      if (toolNames && toolNames.length > 0) {
+        const toolRegistry = getToolRegistry();
+        // Include the output tool in the tools list if not already there
+        const allToolNames = outputTool && !toolNames.includes(outputTool)
+          ? [...toolNames, outputTool]
+          : toolNames;
+        runConfig.tools = toolRegistry.getDefinitions(allToolNames);
+        runConfig.toolExecutor = toolRegistry.createExecutor();
       }
-      // Use Anthropic API directly
-      const response = await invokeViaAPI(config, systemPrompt, prompt, context, history);
-      return NextResponse.json(response);
+
+      // In "job" mode (orchestrator-driven), force structured output via output tool
+      const invocationMode = body.mode as string | undefined;
+      if (invocationMode === 'job' && outputTool) {
+        runConfig.toolChoice = { type: 'tool', name: outputTool };
+      }
+
+      if (stream) {
+        // Streaming API mode with agentic loop
+        return invokeViaAgentRunnerStreaming(runConfig);
+      }
+
+      // Non-streaming with agentic loop
+      const result = await runAgent(runConfig);
+      return NextResponse.json({
+        success: result.success,
+        output: result.output,
+        toolCalls: result.toolCallsLog,
+        iterations: result.totalIterations,
+        stopReason: result.stopReason,
+      });
     } else {
       // Use Claude CLI (no streaming support yet)
       const response = await invokeViaCLI(agentId, prompt, projectId);
@@ -167,127 +210,49 @@ function buildMessages(prompt: string, context?: Record<string, unknown>, histor
   return messages;
 }
 
-async function invokeViaAPI(
-  config: Record<string, unknown>,
-  systemPrompt: string,
-  prompt: string,
-  context?: Record<string, unknown>,
-  history?: HistoryMessage[]
-): Promise<{ success: boolean; output: string }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
-  }
 
-  const messages = buildMessages(prompt, context, history);
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: getModel(config),
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`API error: ${error}`);
-  }
-
-  const data = await response.json();
-  const output = data.content?.[0]?.text || '';
-
-  return { success: true, output };
-}
-
-// Streaming version using SSE
-function invokeViaAPIStreaming(
-  config: Record<string, unknown>,
-  systemPrompt: string,
-  prompt: string,
-  context?: Record<string, unknown>,
-  history?: HistoryMessage[]
-): Response {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
+// Streaming version using agent runner with SSE bridge
+function invokeViaAgentRunnerStreaming(runConfig: AgentRunConfig): Response {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
+        const callbacks: AgentStreamCallbacks = {
+          onText: (text) => {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ text })}\n\n`)
+            );
           },
-          body: JSON.stringify({
-            model: getModel(config),
-            max_tokens: 4096,
-            stream: true,
-            system: systemPrompt,
-            messages: buildMessages(prompt, context, history),
-          }),
-        });
+          onToolCall: (toolName, input) => {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'tool_call', toolName, input })}\n\n`)
+            );
+          },
+          onToolResult: (toolName, result, isError) => {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'tool_result', toolName, result, isError })}\n\n`)
+            );
+          },
+          onIteration: (iteration, stopReason) => {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'iteration', iteration, stopReason })}\n\n`)
+            );
+          },
+        };
 
-        if (!response.ok) {
-          const error = await response.text();
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error })}\n\n`));
-          controller.close();
-          return;
-        }
+        const result = await runAgentStreaming(runConfig, callbacks);
 
-        const reader = response.body?.getReader();
-        if (!reader) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'No response body' })}\n\n`));
-          controller.close();
-          return;
-        }
-
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                // Extract text from content_block_delta events
-                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ text: parsed.delta.text })}\n\n`)
-                  );
-                }
-              } catch {
-                // Ignore parse errors
-              }
-            }
-          }
-        }
+        // Send final result summary
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({
+            type: 'done',
+            success: result.success,
+            iterations: result.totalIterations,
+            stopReason: result.stopReason,
+            toolCalls: result.toolCallsLog,
+          })}\n\n`)
+        );
 
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();

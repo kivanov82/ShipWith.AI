@@ -11,7 +11,11 @@
     "./memory": "./src/memory.ts",
     "./project-store": "./src/project-store.ts",
     "./firestore-store": "./src/firestore-store.ts",
-    "./github-repo": "./src/github-repo.ts"
+    "./github-repo": "./src/github-repo.ts",
+    "./tools": "./src/tools/index.ts",
+    "./agent-runner": "./src/agent-runner.ts",
+    "./agent-runner-streaming": "./src/agent-runner-streaming.ts",
+    "./pr-reviewer": "./src/pr-reviewer.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -21,6 +25,7 @@
     "@octokit/auth-app": "^8.2.0",
     "@octokit/rest": "^22.0.1",
     "better-sqlite3": "^9.4.0",
+    "e2b": "^1.0.0",
     "nanoid": "^5.0.4"
   },
   "devDependencies": {

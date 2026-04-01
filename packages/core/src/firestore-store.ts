@@ -271,6 +271,60 @@ export class FirestoreStore {
     });
     return { totalApiCost, totalUserCharge, count: snap.size };
   }
+
+  // ---- Workflows ----
+
+  async saveWorkflow(workflow: { id: string; projectId: string; steps: any[]; status: string; createdAt: number; updatedAt: number }): Promise<void> {
+    const { steps, ...workflowData } = workflow;
+    await this.db.collection('workflows').doc(workflow.id).set(workflowData);
+
+    const batch = this.db.batch();
+    for (const step of steps) {
+      const stepRef = this.db.collection('workflows').doc(workflow.id).collection('steps').doc(step.id);
+      batch.set(stepRef, step);
+    }
+    await batch.commit();
+  }
+
+  async getWorkflow(workflowId: string): Promise<{ id: string; projectId: string; steps: any[]; status: string; createdAt: number; updatedAt: number } | null> {
+    const doc = await this.db.collection('workflows').doc(workflowId).get();
+    if (!doc.exists) return null;
+
+    const data = doc.data()!;
+    const stepsSnap = await this.db.collection('workflows').doc(workflowId).collection('steps').get();
+    const steps = stepsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    return { ...data, steps } as any;
+  }
+
+  async listWorkflows(projectId: string): Promise<any[]> {
+    const snap = await this.db.collection('workflows').where('projectId', '==', projectId).orderBy('createdAt', 'desc').get();
+    const results = [];
+    for (const doc of snap.docs) {
+      const wf = await this.getWorkflow(doc.id);
+      if (wf) results.push(wf);
+    }
+    return results;
+  }
+
+  async listRunningWorkflows(): Promise<any[]> {
+    const snap = await this.db.collection('workflows').where('status', '==', 'running').get();
+    const results = [];
+    for (const doc of snap.docs) {
+      const wf = await this.getWorkflow(doc.id);
+      if (wf) results.push(wf);
+    }
+    return results;
+  }
+
+  async updateWorkflowStep(workflowId: string, stepId: string, updates: Record<string, any>): Promise<void> {
+    await this.db.collection('workflows').doc(workflowId).collection('steps').doc(stepId).update(updates);
+    await this.db.collection('workflows').doc(workflowId).update({ updatedAt: Date.now() });
+  }
+
+  async updateWorkflowStatus(workflowId: string, status: string): Promise<void> {
+    await this.db.collection('workflows').doc(workflowId).update({ status, updatedAt: Date.now() });
+  }
 }
 
 // Singleton
