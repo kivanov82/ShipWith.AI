@@ -123,7 +123,7 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
                 transition={{ duration: 1.2, repeat: Infinity }}
               />
             )}
-            <span>{statusConfig.text}</span>
+            <span>{agent.currentTask || statusConfig.text}</span>
           </div>
         </div>
       </div>
