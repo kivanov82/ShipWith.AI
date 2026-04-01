@@ -134,13 +134,31 @@ export async function commitFiles(
   const [owner, repo] = repoFullName.split('/');
   const targetBranch = branch || 'main';
 
-  // Get the latest commit SHA on the branch
-  const { data: ref } = await octokit.git.getRef({
-    owner,
-    repo,
-    ref: `heads/${targetBranch}`,
-  });
-  const latestCommitSha = ref.object.sha;
+  // Get the latest commit SHA on the branch (auto-create from main if needed)
+  let latestCommitSha: string;
+  try {
+    const { data: ref } = await octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${targetBranch}`,
+    });
+    latestCommitSha = ref.object.sha;
+  } catch {
+    // Branch doesn't exist — create it from main/default branch
+    const { data: mainRef } = await octokit.git.getRef({
+      owner,
+      repo,
+      ref: 'heads/main',
+    }).catch(() => octokit.git.getRef({ owner, repo, ref: 'heads/master' }));
+
+    await octokit.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${targetBranch}`,
+      sha: mainRef.object.sha,
+    });
+    latestCommitSha = mainRef.object.sha;
+  }
 
   // Get the tree SHA of the latest commit
   const { data: commit } = await octokit.git.getCommit({

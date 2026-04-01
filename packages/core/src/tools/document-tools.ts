@@ -29,25 +29,13 @@ export function registerDocumentTools(registry: ToolRegistry): void {
       },
     },
     async (input, context) => {
-      const { events } = await import('../events');
-      const { nanoid } = await import('nanoid');
-
       const title = input.title as string;
       const content = input.content as string;
       const type = input.type as string;
-      const id = nanoid();
-
       const docPath = `docs/${type}/${title.toLowerCase().replace(/\s+/g, '-')}.md`;
 
-      // Emit artifact.produced event
-      events.artifactProduced(context.agentId, context.projectId || 'unknown', {
-        type: 'document',
-        path: docPath,
-        description: title,
-      });
-
       return {
-        content: `Document created: "${title}" (${type})\nID: ${id}\nLength: ${content.length} chars`,
+        content: `Document saved: "${title}" (${type})\nPath: ${docPath}\nLength: ${content.length} chars\n\nTo persist this document, commit it to the repo using github_write_files.`,
       };
     }
   );
