@@ -126,6 +126,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
   const [input, setInput] = useState('');
   const [isInvoking, setIsInvoking] = useState(false);
   const [streamingOutput, setStreamingOutput] = useState('');
+  const [activeToolCalls, setActiveToolCalls] = useState<string[]>([]);
   // Track suggested next agent per source agent (survives agent deselect/reselect)
   const [suggestedHandoffs, setSuggestedHandoffs] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -225,6 +226,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
   const handleRealInvocation = async (agent: Agent, prompt: string, otherAgentContext?: Record<string, string>) => {
     setIsInvoking(true);
     setStreamingOutput('');
+    setActiveToolCalls([]);
     updateAgentStatus(agent.id, 'thinking', 'Thinking...');
     const invocationStartTime = Date.now();
 
@@ -275,8 +277,19 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
             const targetId = event.input.targetAgent as string;
             setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: targetId }));
           }
+          setActiveToolCalls((prev) => [...prev, `⚡ ${event.toolName}`]);
           const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
           updateAgentStatus(agent.id, 'working', `${event.toolName} · ${elapsed}s`);
+        },
+        onToolResult: (event) => {
+          setActiveToolCalls((prev) => {
+            const updated = [...prev];
+            const idx = updated.findIndex((t) => t === `⚡ ${event.toolName}`);
+            if (idx >= 0) {
+              updated[idx] = event.isError ? `❌ ${event.toolName}` : `✓ ${event.toolName}`;
+            }
+            return updated;
+          });
         },
         onIteration: (iteration, stopReason) => {
           const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
@@ -455,7 +468,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
               })}
 
               {/* Streaming output */}
-              {streamingOutput && activeAgent && (
+              {(streamingOutput || activeToolCalls.length > 0) && activeAgent && isInvoking && (
                 <div className="flex justify-start gap-2.5">
                   <div
                     className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 mt-1"
@@ -467,10 +480,19 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
                     <p className="text-[11px] font-medium mb-1.5 opacity-70" style={{ color: activeAgent.color }}>
                       {activeAgent.name}
                     </p>
-                    <div className="text-[13px] leading-[1.7]">{renderMarkdown(streamingOutput)}</div>
+                    {streamingOutput && (
+                      <div className="text-[13px] leading-[1.7]">{renderMarkdown(streamingOutput)}</div>
+                    )}
+                    {activeToolCalls.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {activeToolCalls.map((tc, i) => (
+                          <div key={i} className="text-[11px] font-mono text-zinc-500">{tc}</div>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5 mt-2 text-zinc-500">
                       <Loader2 className="w-3 h-3 animate-spin" />
-                      <span className="text-[11px]">Generating...</span>
+                      <span className="text-[11px]">Working...</span>
                     </div>
                   </div>
                 </div>
