@@ -265,6 +265,14 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
           updateInvocationOutput(invocationId, chunk);
           updateAgentStatus(agent.id, 'working', 'Generating response...');
         },
+        onToolCall: (event) => {
+          // Auto-trigger handoff when PM uses request_handoff tool
+          if (event.toolName === 'request_handoff' && event.input?.targetAgent) {
+            const targetId = event.input.targetAgent as string;
+            setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: targetId }));
+          }
+          updateAgentStatus(agent.id, 'working', `Using ${event.toolName}...`);
+        },
         onComplete: (response) => {
           completeInvocation(invocationId, response.output);
           addChatMessage({
@@ -278,8 +286,8 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
           // Mark that this agent has unsummarized messages
           pendingAgentRef.current = agent.id;
 
-          // Detect if agent is suggesting a handoff to another specialist
-          if (activeSession) {
+          // Fallback: detect handoff from text if tools didn't trigger it
+          if (activeSession && !suggestedHandoffs[agent.id]) {
             const suggested = detectSuggestedAgent(response.output, activeSession.involvedAgents);
             if (suggested && suggested !== agent.id) {
               setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: suggested }));
