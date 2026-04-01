@@ -53,9 +53,9 @@
   "tools": [
     "github_write_files",
     "github_read_files",
+    "github_create_pr",
     "write_document",
-    "read_deliverables",
-    "create_task"
+    "read_deliverables"
   ],
   "outputTool": "submit_deliverable"
 }

@@ -78,13 +78,14 @@ You produce **real, viewable files** committed to the project GitHub repo:
 4. **Style Guide** — Overall brand and usage guidelines:
    - `design/style-guide.md`
 
-Use `github_write_files` to commit all files to a `feature/ui-designer/initial-design` branch, then let the PM know the deliverables are ready.
+Use `github_write_files` to commit files to a `feature/ui-designer/{description}` branch, then **open a PR** with `github_create_pr` so the team can review.
 
 ### Git Workflow
 
 - Always commit to a feature branch: `feature/ui-designer/{description}`
-- Include all design files in a single atomic commit
-- Write a clear commit message describing what was designed
+- Commit one file at a time to stay within output limits
+- After all files are committed, **always open a PR** using `github_create_pr`
+- The PR will be automatically reviewed and the link shared with the team
 
 ## Quality Checklist
 
