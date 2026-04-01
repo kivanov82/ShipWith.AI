@@ -226,6 +226,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
     setIsInvoking(true);
     setStreamingOutput('');
     updateAgentStatus(agent.id, 'thinking', 'Thinking...');
+    const invocationStartTime = Date.now();
 
     const invocationId = startInvocation(agent.id, prompt, 'chat');
 
@@ -265,7 +266,8 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
         onStream: (chunk) => {
           setStreamingOutput((prev) => prev + chunk);
           updateInvocationOutput(invocationId, chunk);
-          updateAgentStatus(agent.id, 'working', 'Generating response...');
+          const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
+          updateAgentStatus(agent.id, 'working', `Generating... ${elapsed}s`);
         },
         onToolCall: (event) => {
           // Auto-trigger handoff when PM uses request_handoff tool
@@ -273,7 +275,16 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
             const targetId = event.input.targetAgent as string;
             setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: targetId }));
           }
-          updateAgentStatus(agent.id, 'working', `Using ${event.toolName}...`);
+          const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
+          updateAgentStatus(agent.id, 'working', `${event.toolName} · ${elapsed}s`);
+        },
+        onIteration: (iteration, stopReason) => {
+          const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
+          if (stopReason === 'tool_use') {
+            updateAgentStatus(agent.id, 'working', `Processing tools · ${elapsed}s`);
+          } else if (stopReason === 'starting' && iteration > 1) {
+            updateAgentStatus(agent.id, 'working', `Continuing · ${elapsed}s`);
+          }
         },
         onComplete: (response) => {
           completeInvocation(invocationId, response.output);

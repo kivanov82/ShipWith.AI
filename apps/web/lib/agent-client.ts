@@ -21,6 +21,7 @@ export interface InvokeOptions {
   onStream?: (chunk: string) => void;
   onToolCall?: (event: ToolCallEvent) => void;
   onToolResult?: (event: ToolResultEvent) => void;
+  onIteration?: (iteration: number, stopReason: string) => void;
   onComplete?: (response: AgentResponse) => void;
   onError?: (error: Error) => void;
 }
@@ -51,7 +52,7 @@ export interface AgentConfig {
  * Supports both streaming and non-streaming modes
  */
 export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse> {
-  const { agentId, prompt, projectId, context, history, stream, onStream, onToolCall, onToolResult, onComplete, onError } = options;
+  const { agentId, prompt, projectId, context, history, stream, onStream, onToolCall, onToolResult, onIteration, onComplete, onError } = options;
 
   const url = `/api/agents/${agentId}/invoke${stream ? '?stream=true' : ''}`;
 
@@ -115,6 +116,8 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
               onToolCall?.({ toolName: parsed.toolName, input: parsed.input });
             } else if (parsed.type === 'tool_result') {
               onToolResult?.({ toolName: parsed.toolName, result: parsed.result, isError: parsed.isError });
+            } else if (parsed.type === 'iteration') {
+              onIteration?.(parsed.iteration, parsed.stopReason);
             } else if (parsed.type === 'done') {
               // Final summary from agent runner
               const result: AgentResponse = {
