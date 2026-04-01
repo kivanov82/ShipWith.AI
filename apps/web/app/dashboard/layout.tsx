@@ -16,6 +16,7 @@ import {
   CircleDot,
   CircuitBoard,
   FileText,
+  Eye,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -83,6 +84,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const isAgentsPage = pathname === '/dashboard';
   const isProjectPage = pathname === '/dashboard/project';
+  const isObservatoryPage = pathname === '/dashboard/observatory';
 
   return (
     <div className="h-screen flex bg-[#060608] relative">
@@ -166,6 +168,17 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               <FileText className={`w-3.5 h-3.5 ${isProjectPage ? 'text-emerald-400' : 'text-zinc-600'}`} />
               <span className="text-[11px] font-medium">Project</span>
             </Link>
+            <Link
+              href="/dashboard/observatory"
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-left ${
+                isObservatoryPage
+                  ? 'bg-zinc-800/80 text-zinc-100'
+                  : 'hover:bg-zinc-800/40 text-zinc-500'
+              }`}
+            >
+              <Eye className={`w-3.5 h-3.5 ${isObservatoryPage ? 'text-emerald-400' : 'text-zinc-600'}`} />
+              <span className="text-[11px] font-medium">Observatory</span>
+            </Link>
           </div>
         </div>
 
@@ -202,6 +215,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               }`}
             >
               Project
+            </Link>
+            <Link
+              href="/dashboard/observatory"
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+                isObservatoryPage ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500'
+              }`}
+            >
+              Observatory
             </Link>
             <MobileWalletButton />
             <button

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import { runAgent } from '@shipwithai/core/src/agent-runner';
-import { runAgentStreaming } from '@shipwithai/core/src/agent-runner-streaming';
-import type { AgentRunConfig, AgentStreamCallbacks } from '@shipwithai/core/src/types';
-import { getToolRegistry } from '@shipwithai/core/src/tools';
-import { getDefaultHooks } from '@shipwithai/core/src/hooks';
+import { runAgent } from '@shipwithai/core/agent-runner';
+import { runAgentStreaming } from '@shipwithai/core/agent-runner-streaming';
+import type { AgentRunConfig, AgentStreamCallbacks } from '@shipwithai/core/types';
+import { getToolRegistry } from '@shipwithai/core/tools';
+import { getDefaultHooks } from '@shipwithai/core/hooks';
 
 // Agent invocation via Claude CLI or API
 export async function POST(

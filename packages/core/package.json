@@ -15,7 +15,8 @@
     "./tools": "./src/tools/index.ts",
     "./agent-runner": "./src/agent-runner.ts",
     "./agent-runner-streaming": "./src/agent-runner-streaming.ts",
-    "./pr-reviewer": "./src/pr-reviewer.ts"
+    "./pr-reviewer": "./src/pr-reviewer.ts",
+    "./hooks": "./src/hooks.ts"
   },
   "scripts": {
     "build": "tsc",

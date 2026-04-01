@@ -93,7 +93,7 @@ async function handlePullRequest(payload: {
  */
 function reviewInBackground(repoFullName: string, prNumber: number): void {
   // Dynamic import to avoid loading review dependencies on every webhook call
-  import('@shipwithai/core/src/pr-reviewer')
+  import('@shipwithai/core/pr-reviewer')
     .then(({ reviewPullRequest }) => reviewPullRequest(repoFullName, prNumber))
     .then((result) => {
       console.log(`[webhook] Review complete for ${repoFullName}#${prNumber}: ${result.approved ? 'APPROVED' : 'CHANGES REQUESTED'}`);
