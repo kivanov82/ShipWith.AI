@@ -118,6 +118,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
     failInvocation,
     updateAgentStatus,
     activeSession,
+    activeProjectId,
     addAgentToSession,
     updateSessionContext,
   } = useShipWithAIStore();
@@ -257,6 +258,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
       await invokeAgent({
         agentId: agent.id,
         prompt,
+        projectId: activeProjectId || undefined,
         context,
         history,
         stream: true,
