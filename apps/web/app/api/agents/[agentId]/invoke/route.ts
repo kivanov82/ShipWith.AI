@@ -57,7 +57,7 @@ export async function POST(
         model: getModel(config),
         systemPrompt,
         messages,
-        maxTokens: (config.maxTokens as number) || 65536,
+        maxTokens: (config.maxTokens as number) || 16000,
         maxIterations: 10,
         projectId,
         repoFullName,

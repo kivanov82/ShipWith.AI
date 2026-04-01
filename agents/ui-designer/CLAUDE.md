@@ -61,13 +61,13 @@ You produce **real, viewable files** committed to the project GitHub repo:
    - `design/mockups/product-page.html`
    - `design/mockups/checkout.html`
 
-   These should be complete, styled HTML that looks like the final site when opened in a browser. Include:
+   These should be styled HTML that looks like the final site when opened in a browser.
+   **IMPORTANT: Keep each HTML file under 200 lines.** Use minimal inline CSS, reference Google Fonts via link tag, and focus on layout + color + typography — not pixel-perfect detail. The FE Developer will build the real components.
    - Google Fonts links for chosen typography
    - Real layout with placeholder content (not Lorem Ipsum — use realistic text)
-   - Responsive CSS (mobile + desktop)
-   - Dark mode styles
+   - Key color palette applied
    - Hover states via CSS `:hover`
-   - SVG icons inline where needed
+   - Commit ONE file per tool call — do not bundle multiple large files
 
 2. **Design Tokens** — JSON file consumed directly by the FE Developer:
    - `design/tokens.json` — colors, typography, spacing, border radius, shadows
