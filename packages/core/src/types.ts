@@ -246,6 +246,7 @@ export interface AgentRunConfig {
   maxIterations?: number;
   projectId?: string;
   sessionId?: string;
+  repoFullName?: string;
 }
 
 export interface AgentRunResult {

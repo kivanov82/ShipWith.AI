@@ -45,6 +45,10 @@ export async function POST(
     if (mode === 'api') {
       const messages = buildMessages(prompt, context, history);
 
+      // Derive repo name from project ID (convention: kivanov82/shipwithai-{projectId})
+      const repoOwner = process.env.GITHUB_REPO_OWNER || 'kivanov82';
+      const repoFullName = projectId ? `${repoOwner}/shipwithai-${projectId}` : undefined;
+
       // Build agent run config
       const runConfig: AgentRunConfig = {
         agentId: agentId as AgentRunConfig['agentId'],
@@ -54,6 +58,7 @@ export async function POST(
         maxTokens: 4096,
         maxIterations: 10,
         projectId,
+        repoFullName,
       };
 
       // Load tools from agent config

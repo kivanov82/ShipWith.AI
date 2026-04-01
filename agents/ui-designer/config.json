@@ -51,6 +51,8 @@
   "walletAddress": null,
   "erc8004TokenId": null,
   "tools": [
+    "github_write_files",
+    "github_read_files",
     "write_document",
     "read_deliverables",
     "create_task"

@@ -150,6 +150,27 @@ export function registerProjectTools(registry: ToolRegistry): void {
       const contextSummary = input.contextSummary as string;
       const taskDescription = input.taskDescription as string;
 
+      // Auto-create GitHub repo if this is the first specialist handoff
+      let repoInfo = '';
+      if (context.projectId) {
+        try {
+          const { createProjectRepo, repoExists } = await import('../github-repo');
+          const repoName = `shipwithai-${context.projectId}`;
+          const exists = await repoExists(`kivanov82/${repoName}`).catch(() => false);
+          if (!exists) {
+            const repo = await createProjectRepo(
+              context.projectId,
+              context.projectId,
+              `ShipWith.AI project`
+            );
+            repoInfo = `\nGitHub repo created: ${repo.url}`;
+          }
+        } catch (err) {
+          // Non-fatal — repo creation is optional
+          console.error('Auto repo creation failed (non-fatal):', err);
+        }
+      }
+
       events.messageSent(
         context.agentId,
         targetAgent as any,
@@ -158,7 +179,7 @@ export function registerProjectTools(registry: ToolRegistry): void {
       );
 
       return {
-        content: `Handoff requested to ${targetAgent}.\nContext: ${contextSummary.substring(0, 100)}...\nTask: ${taskDescription.substring(0, 100)}...`,
+        content: `Handoff requested to ${targetAgent}.\nContext: ${contextSummary.substring(0, 100)}...\nTask: ${taskDescription.substring(0, 100)}...${repoInfo}`,
       };
     }
   );
