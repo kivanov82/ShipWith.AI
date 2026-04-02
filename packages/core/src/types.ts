@@ -208,6 +208,8 @@ export interface ToolExecutionContext {
   projectId?: string;
   sessionId?: string;
   repoFullName?: string;
+  activeBranch?: string;
+  onBranchCreated?: (branch: string) => void;
 }
 
 export type ToolErrorCategory =
@@ -247,6 +249,8 @@ export interface AgentRunConfig {
   projectId?: string;
   sessionId?: string;
   repoFullName?: string;
+  activeBranch?: string;
+  onBranchCreated?: (branch: string) => void;
 }
 
 export interface AgentRunResult {

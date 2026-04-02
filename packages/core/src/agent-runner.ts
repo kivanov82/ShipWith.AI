@@ -137,6 +137,8 @@ export async function runAgent(config: AgentRunConfig): Promise<AgentRunResult> 
       projectId: config.projectId,
       sessionId: config.sessionId,
       repoFullName: config.repoFullName,
+      activeBranch: config.activeBranch,
+      onBranchCreated: config.onBranchCreated,
     };
 
     for (const toolUse of toolUseBlocks) {

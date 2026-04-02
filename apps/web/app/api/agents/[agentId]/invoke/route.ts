@@ -51,6 +51,19 @@ export async function POST(
       const repoOwner = process.env.GITHUB_REPO_OWNER || 'kivanov82';
       const repoFullName = projectId ? `${repoOwner}/shipwithai-${projectId.toLowerCase()}` : undefined;
 
+      // Load active branch from session metadata (if agent previously committed)
+      const sessionId = body.sessionId as string | undefined;
+      let activeBranch: string | undefined;
+      if (sessionId) {
+        try {
+          const { getFirestoreStore } = await import('@shipwithai/core/firestore-store');
+          const store = getFirestoreStore();
+          const session = await store.getSession(sessionId);
+          const branches = (session as any)?.activeBranches as Record<string, string> | undefined;
+          activeBranch = branches?.[agentId];
+        } catch { /* non-fatal */ }
+      }
+
       // Build agent run config
       const runConfig: AgentRunConfig = {
         agentId: agentId as AgentRunConfig['agentId'],
@@ -61,6 +74,17 @@ export async function POST(
         maxIterations: 10,
         projectId,
         repoFullName,
+        activeBranch,
+        onBranchCreated: sessionId ? async (branch: string) => {
+          try {
+            const { getFirestoreStore } = await import('@shipwithai/core/firestore-store');
+            const store = getFirestoreStore();
+            const session = await store.getSession(sessionId);
+            const branches = (session as any)?.activeBranches || {};
+            branches[agentId] = branch;
+            await store.updateSession(sessionId, { activeBranches: branches } as any);
+          } catch { /* non-fatal */ }
+        } : undefined,
       };
 
       // Load tools from agent config

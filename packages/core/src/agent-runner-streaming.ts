@@ -248,6 +248,8 @@ export async function runAgentStreaming(
       projectId: config.projectId,
       sessionId: config.sessionId,
       repoFullName: config.repoFullName,
+      activeBranch: config.activeBranch,
+      onBranchCreated: config.onBranchCreated,
     };
 
     for (const toolUse of toolUseBlocks) {

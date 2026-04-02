@@ -113,7 +113,17 @@ export function registerGitHubTools(registry: ToolRegistry): void {
       const repo = getRepoName(context);
       const files = input.files as Array<{ path: string; content: string }>;
       const message = input.message as string;
-      const branch = input.branch as string;
+      // Use provided branch, fall back to active branch from context
+      const branch = (input.branch as string) || context.activeBranch;
+
+      if (!branch) {
+        return {
+          content: 'No branch specified. Use a feature branch (e.g., "feature/your-agent-id/description").',
+          isError: true,
+          errorCategory: 'validation',
+          isRetryable: true,
+        };
+      }
 
       if (branch === 'main' || branch === 'master') {
         return {
@@ -132,6 +142,8 @@ export function registerGitHubTools(registry: ToolRegistry): void {
           `ShipWith.AI ${context.agentId}`,
           branch
         );
+        // Notify that this branch is active
+        context.onBranchCreated?.(branch);
         return {
           content: `Committed ${files.length} file(s) to ${branch}\nSHA: ${result.sha}\nFiles: ${files.map((f) => f.path).join(', ')}`,
         };
@@ -167,8 +179,17 @@ export function registerGitHubTools(registry: ToolRegistry): void {
       const [owner, name] = repo.split('/');
       const title = input.title as string;
       const body = input.body as string;
-      const head = input.head as string;
+      const head = (input.head as string) || context.activeBranch;
       const base = (input.base as string) || 'main';
+
+      if (!head) {
+        return {
+          content: 'No source branch specified. Commit files first, then open a PR.',
+          isError: true,
+          errorCategory: 'validation',
+          isRetryable: true,
+        };
+      }
 
       try {
         // Import dynamically to avoid circular deps at module level

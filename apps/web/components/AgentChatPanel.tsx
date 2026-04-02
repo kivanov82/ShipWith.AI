@@ -262,6 +262,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
         agentId: agent.id,
         prompt,
         projectId: activeProjectId || undefined,
+        sessionId: activeSession?.id,
         context,
         history,
         stream: true,

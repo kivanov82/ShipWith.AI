@@ -15,6 +15,7 @@ export interface InvokeOptions {
   agentId: string;
   prompt: string;
   projectId?: string;
+  sessionId?: string;
   context?: Record<string, unknown>;
   history?: Array<{ role: 'user' | 'agent'; content: string }>;
   stream?: boolean;
@@ -52,7 +53,7 @@ export interface AgentConfig {
  * Supports both streaming and non-streaming modes
  */
 export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse> {
-  const { agentId, prompt, projectId, context, history, stream, onStream, onToolCall, onToolResult, onIteration, onComplete, onError } = options;
+  const { agentId, prompt, projectId, sessionId, context, history, stream, onStream, onToolCall, onToolResult, onIteration, onComplete, onError } = options;
 
   const url = `/api/agents/${agentId}/invoke${stream ? '?stream=true' : ''}`;
 
@@ -63,7 +64,7 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, projectId, context, history }),
+        body: JSON.stringify({ prompt, projectId, sessionId, context, history }),
       });
 
       console.log('[agent-client] Response status:', response.status);
@@ -145,7 +146,7 @@ export async function invokeAgent(options: InvokeOptions): Promise<AgentResponse
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, projectId, context, history }),
+        body: JSON.stringify({ prompt, projectId, sessionId, context, history }),
       });
 
       const data = await response.json();
