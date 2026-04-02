@@ -203,8 +203,16 @@ export function registerGitHubTools(registry: ToolRegistry): void {
           head,
           base,
         });
+
+        // Auto-trigger code review in background
+        import('../pr-reviewer').then(({ reviewPullRequest }) => {
+          reviewPullRequest(repo, pr.data.number).catch((err) =>
+            console.error(`[auto-review] Failed to review PR #${pr.data.number}:`, err)
+          );
+        }).catch(() => {});
+
         return {
-          content: `PR #${pr.data.number} created: ${pr.data.html_url}\nTitle: ${title}\nBranch: ${head} → ${base}`,
+          content: `PR #${pr.data.number} created: ${pr.data.html_url}\nTitle: ${title}\nBranch: ${head} → ${base}\n\nCode review has been automatically triggered.`,
         };
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -223,6 +231,94 @@ export function registerGitHubTools(registry: ToolRegistry): void {
         }
         return {
           content: `Failed to create PR: ${msg}`,
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // --- github_review_pr ---
+  registry.register(
+    {
+      name: 'github_review_pr',
+      description:
+        'Post a code review on a pull request with inline comments. ' +
+        'Use after analyzing the PR diff. Posts findings as inline comments on specific lines.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          prNumber: { type: 'number', description: 'Pull request number' },
+          event: {
+            type: 'string',
+            enum: ['APPROVE', 'REQUEST_CHANGES', 'COMMENT'],
+            description: 'Review decision',
+          },
+          body: { type: 'string', description: 'Overall review summary' },
+          comments: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                path: { type: 'string', description: 'File path' },
+                line: { type: 'number', description: 'Line number in the diff' },
+                body: { type: 'string', description: 'Comment body with finding details' },
+              },
+              required: ['path', 'body'],
+            },
+            description: 'Inline comments on specific lines',
+          },
+        },
+        required: ['prNumber', 'event', 'body'],
+      },
+    },
+    async (input, context) => {
+      const repo = getRepoName(context);
+      const [owner, name] = repo.split('/');
+      const prNumber = input.prNumber as number;
+      const event = input.event as 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT';
+      const body = input.body as string;
+      const comments = (input.comments as Array<{ path: string; line?: number; body: string }>) || [];
+
+      try {
+        const { getOctokit } = require('../github-repo');
+        const octokit = getOctokit();
+
+        await octokit.pulls.createReview({
+          owner,
+          repo: name,
+          pull_number: prNumber,
+          event,
+          body: `## ShipWith.AI Code Review\n\n${body}\n\n---\n_Reviewed by ShipWith.AI code-reviewer agent_`,
+          comments: comments
+            .filter((c) => c.line) // Only include comments with line numbers
+            .map((c) => ({
+              path: c.path,
+              line: c.line!,
+              body: c.body,
+              side: 'RIGHT' as const,
+            })),
+        });
+
+        // Post comments without line numbers as regular PR comments
+        const noLineComments = comments.filter((c) => !c.line);
+        if (noLineComments.length > 0) {
+          const commentBody = noLineComments
+            .map((c) => `**${c.path}**: ${c.body}`)
+            .join('\n\n');
+          await octokit.issues.createComment({
+            owner,
+            repo: name,
+            issue_number: prNumber,
+            body: `### Additional Findings\n\n${commentBody}`,
+          });
+        }
+
+        return {
+          content: `Review posted on PR #${prNumber}: ${event}\n${comments.length} inline comment(s)\nSummary: ${body.substring(0, 100)}...`,
+        };
+      } catch (error) {
+        return {
+          content: `Failed to post review: ${error instanceof Error ? error.message : String(error)}`,
           isError: true,
         };
       }

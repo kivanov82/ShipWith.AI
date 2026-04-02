@@ -1,0 +1,42 @@
+{
+  "id": "code-reviewer",
+  "name": "ShipWith.AI: Code Reviewer",
+  "model": "claude-sonnet-4-20250514",
+  "description": "Automated code review specialist. Analyzes pull request diffs for bugs, security vulnerabilities, logic errors, and convention violations. Posts structured findings with severity levels.",
+  "capabilities": [
+    "code-review",
+    "bug-detection",
+    "security-analysis",
+    "logic-verification",
+    "convention-checking",
+    "regression-detection"
+  ],
+  "pricing": {
+    "baseRate": "0.03",
+    "currency": "USDC",
+    "perUnit": "task"
+  },
+  "inputs": [
+    {
+      "name": "pullRequest",
+      "type": "text",
+      "description": "PR number or diff to review",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "review",
+      "type": "artifact",
+      "description": "Structured review with findings and severity levels",
+      "required": true
+    }
+  ],
+  "walletAddress": null,
+  "erc8004TokenId": null,
+  "tools": [
+    "github_read_files",
+    "github_review_pr"
+  ],
+  "outputTool": "submit_review"
+}

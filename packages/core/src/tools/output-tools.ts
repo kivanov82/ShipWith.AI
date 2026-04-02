@@ -175,6 +175,48 @@ export function registerOutputTools(registry: ToolRegistry): void {
     }
   );
 
+  // --- submit_review ---
+  registry.register(
+    {
+      name: 'submit_review',
+      description:
+        'Submit a structured code review. Used by the code-reviewer agent after analyzing a PR.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['approved', 'changes_requested'],
+          },
+          summary: { type: 'string', description: 'Brief overall assessment' },
+          findings: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                severity: { type: 'string', enum: ['important', 'nit', 'pre_existing'] },
+                file: { type: 'string' },
+                line: { type: 'number' },
+                title: { type: 'string' },
+                description: { type: 'string' },
+                suggestion: { type: 'string' },
+              },
+              required: ['severity', 'file', 'title', 'description'],
+            },
+          },
+          filesReviewed: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        required: ['status', 'summary', 'findings'],
+      },
+    },
+    async (input, _context) => {
+      return { content: JSON.stringify(input) };
+    }
+  );
+
   // --- submit_test_report ---
   registry.register(
     {

@@ -271,6 +271,7 @@ const initialAgents: Agent[] = [
   { id: 'payment-integration', name: 'Payment Integration', role: 'Payments & Billing', description: 'Stripe, Shopify & checkout flows', pricing: '$0.05-0.12', status: 'idle', avatar: 'PI', color: '#eab308', balance: 100 },
   { id: 'mobile-developer', name: 'Mobile Developer', role: 'Mobile-First Dev', description: 'Responsive & PWA prototypes', pricing: '$0.05-0.12', status: 'idle', avatar: 'MB', color: '#f472b6', balance: 100 },
   { id: 'e-commerce-specialist', name: 'E-commerce Specialist', role: 'Store Setup', description: 'Shopify, catalogs & shipping', pricing: '$0.04-0.10', status: 'idle', avatar: 'EC', color: '#fb923c', balance: 100 },
+  { id: 'code-reviewer', name: 'Code Reviewer', role: 'PR Review', description: 'Automated code review & bug detection', pricing: '$0.03-0.08', status: 'idle', avatar: 'CR', color: '#f43f5e', balance: 100 },
 ];
 
 export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({

@@ -1,40 +1,37 @@
 /**
- * PR Reviewer — Fetches PR diff from GitHub, runs a review agent, posts comments.
+ * PR Reviewer — Invokes the code-reviewer agent to review pull requests.
  *
- * Called by the GitHub webhook handler when a pull_request event is received.
- * Uses OUR Anthropic API key — never exposes secrets to customer repos.
+ * Fetches PR diff from GitHub, loads the code-reviewer agent's system prompt,
+ * runs it with tools (github_read_files, github_review_pr), and lets the agent
+ * post its findings directly on the PR.
+ *
+ * Called from:
+ * - github_create_pr tool (auto-triggers review after PR creation)
+ * - GitHub webhook handler (for external PRs)
  */
 
 import { getOctokit } from './github-repo';
 import { runAgent } from './agent-runner';
+import { getToolRegistry } from './tools';
 import type { AgentRunConfig } from './types';
-
-const REVIEW_SYSTEM_PROMPT = `You are a senior code reviewer for ShipWith.AI projects.
-
-Review the provided pull request diff for:
-1. **Bugs and logic errors** — incorrect conditions, off-by-ones, null handling
-2. **Security issues** — injection, XSS, exposed secrets, insecure defaults
-3. **Code quality** — readability, naming, unnecessary complexity
-4. **Project conventions** — check CLAUDE.md if provided for project-specific rules
-5. **Performance** — obvious inefficiencies, N+1 queries, large bundle impact
-
-Be specific and actionable. Reference file paths and line numbers.
-Only flag issues you are confident about — avoid false positives.
-If the code looks good, say so briefly.`;
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface ReviewResult {
   approved: boolean;
-  comments: Array<{
-    path: string;
-    line: number;
-    body: string;
-    side?: 'LEFT' | 'RIGHT';
+  findings: Array<{
+    severity: 'important' | 'nit' | 'pre_existing';
+    file: string;
+    line?: number;
+    title: string;
+    description: string;
+    suggestion?: string;
   }>;
   summary: string;
 }
 
 /**
- * Review a PR and post comments.
+ * Review a PR using the code-reviewer agent.
  */
 export async function reviewPullRequest(
   repoFullName: string,
@@ -71,8 +68,18 @@ export async function reviewPullRequest(
     // No CLAUDE.md — that's fine
   }
 
-  // 3. Run review agent
-  const prompt = `Review this pull request:
+  // 3. Load code-reviewer agent system prompt
+  let systemPrompt: string;
+  try {
+    const agentDir = path.join(process.cwd(), '..', '..', 'agents', 'code-reviewer');
+    systemPrompt = fs.readFileSync(path.join(agentDir, 'CLAUDE.md'), 'utf-8');
+  } catch {
+    // Fallback if agent dir not found (e.g., in production container)
+    systemPrompt = 'You are a code reviewer. Find bugs, security issues, and logic errors. Post your review using the github_review_pr tool.';
+  }
+
+  // 4. Build the review prompt
+  const prompt = `Review PR #${prNumber} in ${repoFullName}:
 
 **Title**: ${pr.data.title}
 **Description**: ${pr.data.body || '(none)'}
@@ -84,65 +91,46 @@ ${projectConventions ? `## Project Conventions (from CLAUDE.md)\n\n${projectConv
 
 ${diffSummary}
 
-Provide your review as a JSON object with this structure:
-{
-  "approved": true/false,
-  "summary": "Brief overall assessment",
-  "comments": [
-    { "path": "file.ts", "line": 42, "body": "Issue description and suggestion" }
-  ]
-}`;
+Review this PR. Use \`github_read_files\` if you need to see more context from the repo. Then use \`github_review_pr\` to post your findings as inline comments on PR #${prNumber}. Finally, submit your structured review via \`submit_review\`.`;
 
+  // 5. Load tools for the code-reviewer agent
+  const toolRegistry = getToolRegistry();
+  const toolNames = ['github_read_files', 'github_review_pr', 'submit_review'];
+  const tools = toolRegistry.getDefinitions(toolNames);
+  const toolExecutor = toolRegistry.createExecutor();
+
+  // 6. Run the code-reviewer agent
   const runConfig: AgentRunConfig = {
-    agentId: 'qa-tester',
+    agentId: 'code-reviewer',
     model: 'claude-sonnet-4-20250514',
-    systemPrompt: REVIEW_SYSTEM_PROMPT,
+    systemPrompt,
     messages: [{ role: 'user', content: prompt }],
-    maxTokens: 4096,
-    maxIterations: 1,
+    tools,
+    toolExecutor,
+    maxTokens: 8000,
+    maxIterations: 5,
+    repoFullName,
   };
 
   const result = await runAgent(runConfig);
 
-  // 4. Parse review result
-  let review: ReviewResult;
-  try {
-    // Try to extract JSON from the output
-    const jsonMatch = result.output.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      review = JSON.parse(jsonMatch[0]) as ReviewResult;
-    } else {
-      review = { approved: true, comments: [], summary: result.output };
-    }
-  } catch {
-    review = { approved: true, comments: [], summary: result.output };
+  // 7. Extract review result from submit_review tool call
+  const reviewCall = result.toolCallsLog.find((tc) => tc.toolName === 'submit_review' && !tc.isError);
+  if (reviewCall) {
+    try {
+      const parsed = JSON.parse(reviewCall.output);
+      return {
+        approved: parsed.status === 'approved',
+        findings: parsed.findings || [],
+        summary: parsed.summary || '',
+      };
+    } catch { /* fall through */ }
   }
 
-  // 5. Post review on PR
-  try {
-    await octokit.pulls.createReview({
-      owner,
-      repo,
-      pull_number: prNumber,
-      event: review.approved ? 'APPROVE' : 'REQUEST_CHANGES',
-      body: `## ShipWith.AI Code Review\n\n${review.summary}\n\n---\n_Automated review by ShipWith.AI_`,
-      comments: review.comments.map((c) => ({
-        path: c.path,
-        line: c.line,
-        body: c.body,
-        side: c.side || 'RIGHT',
-      })),
-    });
-  } catch (error) {
-    // If posting inline comments fails (e.g., line not in diff), post as regular comment
-    console.error('Failed to post inline review, falling back to comment:', error);
-    await octokit.issues.createComment({
-      owner,
-      repo,
-      issue_number: prNumber,
-      body: `## ShipWith.AI Code Review\n\n${review.summary}\n\n${review.comments.map((c) => `- **${c.path}:${c.line}**: ${c.body}`).join('\n')}\n\n---\n_Automated review by ShipWith.AI_`,
-    });
-  }
-
-  return review;
+  // Fallback: extract from text output
+  return {
+    approved: !result.output.toLowerCase().includes('changes requested'),
+    findings: [],
+    summary: result.output || 'Review completed',
+  };
 }
