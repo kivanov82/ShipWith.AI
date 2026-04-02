@@ -191,12 +191,12 @@ export const events = {
       payload: { taskId },
     }),
 
-  taskCompleted: (source: AgentId, projectId: string, taskId: string, artifacts: string[]) =>
+  taskCompleted: (source: AgentId, projectId: string, taskId: string, artifacts?: string[] | Record<string, unknown>) =>
     getEventBus().emit({
       type: 'task.completed',
       source,
       projectId,
-      payload: { taskId, artifacts },
+      payload: { taskId, ...(Array.isArray(artifacts) ? { artifacts } : artifacts || {}) },
     }),
 
   paymentSent: (from: AgentId | 'user', to: AgentId, amount: string, txHash?: string) =>

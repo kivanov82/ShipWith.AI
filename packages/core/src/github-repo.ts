@@ -315,6 +315,31 @@ export async function listCommits(
 /**
  * Check if a repo exists.
  */
+/**
+ * Merge a pull request.
+ */
+export async function mergePullRequest(
+  repoFullName: string,
+  prNumber: number,
+  mergeMethod: 'merge' | 'squash' | 'rebase' = 'squash'
+): Promise<{ merged: boolean; sha: string; message: string }> {
+  const octokit = getOctokit();
+  const [owner, repo] = repoFullName.split('/');
+
+  const { data } = await octokit.pulls.merge({
+    owner,
+    repo,
+    pull_number: prNumber,
+    merge_method: mergeMethod,
+  });
+
+  return {
+    merged: data.merged,
+    sha: data.sha,
+    message: data.message,
+  };
+}
+
 export async function repoExists(repoFullName: string): Promise<boolean> {
   const octokit = getOctokit();
   const [owner, repo] = repoFullName.split('/');
