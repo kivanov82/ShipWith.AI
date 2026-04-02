@@ -186,8 +186,22 @@ export function registerGitHubTools(registry: ToolRegistry): void {
           content: `PR #${pr.data.number} created: ${pr.data.html_url}\nTitle: ${title}\nBranch: ${head} → ${base}`,
         };
       } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        // If PR already exists for this branch, find and return it
+        if (msg.includes('422') || msg.includes('already exists') || msg.includes('pull request already exists')) {
+          try {
+            const { getOctokit } = require('../github-repo');
+            const kit = getOctokit();
+            const existing = await kit.pulls.list({ owner, repo: name, head: `${owner}:${head}`, state: 'open' });
+            if (existing.data.length > 0) {
+              return {
+                content: `PR already exists: ${existing.data[0].html_url}\nTitle: ${existing.data[0].title}\nBranch: ${head} → ${base}`,
+              };
+            }
+          } catch { /* fall through */ }
+        }
         return {
-          content: `Failed to create PR: ${error instanceof Error ? error.message : String(error)}`,
+          content: `Failed to create PR: ${msg}`,
           isError: true,
         };
       }

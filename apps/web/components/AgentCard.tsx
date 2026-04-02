@@ -17,8 +17,8 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
 
   const statusConfig = {
     idle: { color: 'bg-zinc-600', text: hasDelivered ? 'Done' : 'Idle', icon: hasDelivered ? CheckCircle : null },
-    thinking: { color: 'bg-amber-500', text: 'Thinking', icon: Loader2 },
-    working: { color: 'bg-emerald-500', text: 'Working', icon: null },
+    thinking: { color: 'bg-amber-500', text: 'Thinking...', icon: Loader2 },
+    working: { color: 'bg-emerald-500', text: 'Working...', icon: Loader2 },
     waiting: { color: 'bg-cyan-500', text: 'Waiting', icon: Clock },
     error: { color: 'bg-red-500', text: 'Error', icon: null },
   }[agent.status];
@@ -52,6 +52,21 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
           }}
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {/* Working glow — visible even when not selected */}
+      {isActive && !isSelected && (
+        <motion.div
+          className="absolute -inset-[2px] rounded-xl pointer-events-none z-0"
+          style={{
+            boxShadow: agent.status === 'thinking'
+              ? `0 0 20px 6px rgba(245, 158, 11, 0.4)`
+              : agent.status === 'error'
+              ? `0 0 20px 6px rgba(239, 68, 68, 0.4)`
+              : `0 0 20px 6px rgba(16, 185, 129, 0.4)`,
+          }}
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
@@ -114,7 +129,7 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
             ${agent.status === 'error' ? 'bg-red-500/15 text-red-400' : ''}
           `}>
             {statusConfig.icon && (
-              <statusConfig.icon className={`w-3 h-3 ${agent.status === 'thinking' ? 'animate-spin' : ''}`} />
+              <statusConfig.icon className={`w-3 h-3 ${(agent.status === 'thinking' || agent.status === 'working') ? 'animate-spin' : ''}`} />
             )}
             {!statusConfig.icon && (
               <motion.div

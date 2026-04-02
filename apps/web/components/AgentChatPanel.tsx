@@ -277,16 +277,39 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
             const targetId = event.input.targetAgent as string;
             setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: targetId }));
           }
-          setActiveToolCalls((prev) => [...prev, `⚡ ${event.toolName}`]);
+          const friendlyNames: Record<string, string> = {
+            github_write_files: 'Committing to repository',
+            github_read_files: 'Reading from repository',
+            github_create_pr: 'Opening pull request',
+            github_create_branch: 'Creating branch',
+            create_task: 'Creating task',
+            create_workflow: 'Building workflow',
+            get_project_status: 'Checking project status',
+            get_workflow_status: 'Checking workflow',
+            request_handoff: 'Handing off to specialist',
+            list_deliverables: 'Reviewing deliverables',
+            read_deliverables: 'Reading deliverables',
+            write_document: 'Writing document',
+            web_search: 'Searching the web',
+            run_command: 'Running command',
+            submit_deliverable: 'Submitting work',
+            submit_plan: 'Submitting plan',
+            vercel_deploy_preview: 'Deploying preview',
+            vercel_deploy: 'Deploying to production',
+          };
+          const friendly = friendlyNames[event.toolName] || event.toolName;
+          setActiveToolCalls((prev) => [...prev, `⚡ ${friendly}`]);
           const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
-          updateAgentStatus(agent.id, 'working', `${event.toolName} · ${elapsed}s`);
+          updateAgentStatus(agent.id, 'working', `${friendly} · ${elapsed}s`);
         },
         onToolResult: (event) => {
           setActiveToolCalls((prev) => {
             const updated = [...prev];
-            const idx = updated.findIndex((t) => t === `⚡ ${event.toolName}`);
+            // Find the last pending call (⚡) and mark it done
+            const idx = updated.findLastIndex((t) => t.startsWith('⚡'));
             if (idx >= 0) {
-              updated[idx] = event.isError ? `❌ ${event.toolName}` : `✓ ${event.toolName}`;
+              const label = updated[idx].replace('⚡ ', '');
+              updated[idx] = event.isError ? `✗ ${label}` : `✓ ${label}`;
             }
             return updated;
           });
