@@ -62,9 +62,11 @@
   ],
   "walletAddress": null,
   "erc8004TokenId": null,
+  "maxIterations": 20,
   "tools": [
     "github_write_files",
     "github_read_files",
+    "github_create_pr",
     "vercel_deploy_preview",
     "read_deliverables"
   ],

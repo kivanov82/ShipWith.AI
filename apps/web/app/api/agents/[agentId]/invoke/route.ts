@@ -75,7 +75,7 @@ export async function POST(
         systemPrompt,
         messages,
         maxTokens: (config.maxTokens as number) || 16000,
-        maxIterations: 10,
+        maxIterations: (config.maxIterations as number) || 10,
         projectId,
         repoFullName,
         activeBranch,
