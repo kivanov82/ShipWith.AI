@@ -123,12 +123,24 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
     updateSessionContext,
   } = useShipWithAIStore();
 
+  const {
+    agentStreams,
+    startAgentStream,
+    endAgentStream,
+    updateAgentStream,
+    addAgentStreamToolCall,
+    updateAgentStreamToolResult,
+  } = useShipWithAIStore();
+
   const [input, setInput] = useState('');
   const [isInvoking, setIsInvoking] = useState(false);
-  const [streamingOutput, setStreamingOutput] = useState('');
-  const [activeToolCalls, setActiveToolCalls] = useState<string[]>([]);
   // Track suggested next agent per source agent (survives agent deselect/reselect)
   const [suggestedHandoffs, setSuggestedHandoffs] = useState<Record<string, string>>({});
+
+  // Per-agent streaming state from store
+  const currentStream = activeAgent ? agentStreams[activeAgent.id] : undefined;
+  const streamingOutput = currentStream?.output || '';
+  const activeToolCalls = currentStream?.toolCalls || [];
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pendingAgentRef = useRef<string | null>(null);
 
@@ -225,8 +237,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
 
   const handleRealInvocation = async (agent: Agent, prompt: string, otherAgentContext?: Record<string, string>) => {
     setIsInvoking(true);
-    setStreamingOutput('');
-    setActiveToolCalls([]);
+    startAgentStream(agent.id);
     updateAgentStatus(agent.id, 'thinking', 'Thinking...');
     const invocationStartTime = Date.now();
 
@@ -267,7 +278,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
         history,
         stream: true,
         onStream: (chunk) => {
-          setStreamingOutput((prev) => prev + chunk);
+          updateAgentStream(agent.id, chunk);
           updateInvocationOutput(invocationId, chunk);
           const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
           updateAgentStatus(agent.id, 'working', `Generating... ${elapsed}s`);
@@ -301,21 +312,12 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
             vercel_deploy: 'Deploying to production',
           };
           const friendly = friendlyNames[event.toolName] || event.toolName;
-          setActiveToolCalls((prev) => [...prev, `⚡ ${friendly}`]);
+          addAgentStreamToolCall(agent.id, `⚡ ${friendly}`);
           const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
           updateAgentStatus(agent.id, 'working', `${friendly} · ${elapsed}s`);
         },
         onToolResult: (event) => {
-          setActiveToolCalls((prev) => {
-            const updated = [...prev];
-            // Find the last pending call (⚡) and mark it done
-            const idx = updated.findLastIndex((t) => t.startsWith('⚡'));
-            if (idx >= 0) {
-              const label = updated[idx].replace('⚡ ', '');
-              updated[idx] = event.isError ? `✗ ${label}` : `✓ ${label}`;
-            }
-            return updated;
-          });
+          updateAgentStreamToolResult(agent.id, event.isError);
         },
         onIteration: (iteration, stopReason) => {
           const elapsed = Math.round((Date.now() - invocationStartTime) / 1000);
@@ -337,7 +339,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
               content: output,
             });
           }
-          setStreamingOutput('');
+          endAgentStream(agent.id);
           updateAgentStatus(agent.id, 'idle');
 
           // Mark that this agent has unsummarized messages
@@ -359,7 +361,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
             agentId: agent.id,
             content: `Error: ${error.message}`,
           });
-          setStreamingOutput('');
+          endAgentStream(agent.id);
           updateAgentStatus(agent.id, 'error');
         },
       });
@@ -495,7 +497,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
               })}
 
               {/* Streaming output */}
-              {(streamingOutput || activeToolCalls.length > 0) && activeAgent && isInvoking && (
+              {(streamingOutput || activeToolCalls.length > 0) && activeAgent && currentStream?.isActive && (
                 <div className="flex justify-start gap-2.5">
                   <div
                     className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 mt-1"

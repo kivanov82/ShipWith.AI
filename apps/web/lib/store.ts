@@ -201,6 +201,14 @@ interface ShipWithAIState {
   incrementInteractionCount: () => void;
   resetProjectStats: () => void;
 
+  // Per-agent streaming state (persists across agent switches)
+  agentStreams: Record<string, { output: string; toolCalls: string[]; isActive: boolean }>;
+  updateAgentStream: (agentId: string, chunk: string) => void;
+  addAgentStreamToolCall: (agentId: string, label: string) => void;
+  updateAgentStreamToolResult: (agentId: string, isError: boolean) => void;
+  startAgentStream: (agentId: string) => void;
+  endAgentStream: (agentId: string) => void;
+
   // Real invocations
   invocations: Record<string, InvocationState>;
   isRealMode: boolean;
@@ -404,6 +412,40 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
 
   // Real invocations
   invocations: {},
+  agentStreams: {},
+  updateAgentStream: (agentId, chunk) =>
+    set((state) => {
+      const current = state.agentStreams[agentId] || { output: '', toolCalls: [], isActive: true };
+      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, output: current.output + chunk } } };
+    }),
+  addAgentStreamToolCall: (agentId, label) =>
+    set((state) => {
+      const current = state.agentStreams[agentId] || { output: '', toolCalls: [], isActive: true };
+      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, toolCalls: [...current.toolCalls, label] } } };
+    }),
+  updateAgentStreamToolResult: (agentId, isError) =>
+    set((state) => {
+      const current = state.agentStreams[agentId];
+      if (!current) return state;
+      const updated = [...current.toolCalls];
+      const idx = updated.findLastIndex((t) => t.startsWith('⚡'));
+      if (idx >= 0) {
+        const label = updated[idx].replace('⚡ ', '');
+        updated[idx] = isError ? `✗ ${label}` : `✓ ${label}`;
+      }
+      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, toolCalls: updated } } };
+    }),
+  startAgentStream: (agentId) =>
+    set((state) => ({
+      agentStreams: { ...state.agentStreams, [agentId]: { output: '', toolCalls: [], isActive: true } },
+    })),
+  endAgentStream: (agentId) =>
+    set((state) => {
+      const current = state.agentStreams[agentId];
+      if (!current) return state;
+      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, isActive: false } } };
+    }),
+
   isRealMode: false,
   setRealMode: (enabled) => set({ isRealMode: enabled }),
   startInvocation: (agentId, prompt, mode) => {
