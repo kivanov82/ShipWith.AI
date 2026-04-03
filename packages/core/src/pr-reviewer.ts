@@ -44,12 +44,14 @@ export interface ReviewResult {
  * @param prNumber - PR number
  * @param originalAgentId - agent that created the PR (for fix loop)
  * @param projectId - for event notifications
+ * @param sessionId - for saving chat messages
  */
 export async function reviewPullRequest(
   repoFullName: string,
   prNumber: number,
   originalAgentId?: string,
-  projectId?: string
+  projectId?: string,
+  sessionId?: string
 ): Promise<ReviewResult> {
   let cycle = 0;
   let lastReviewResult: ReviewResult = {
@@ -93,6 +95,11 @@ export async function reviewPullRequest(
             console.error(`[pr-review] Failed to save completion notification:`, notifyErr);
           }
           console.log(`[pr-review] PR #${prNumber} merged and notification saved for project ${projectId}`);
+
+          // Step 4: Auto-invoke PM to decide next step
+          if (sessionId) {
+            autoInvokePM(projectId, sessionId, repoFullName, prNumber, originalAgentId, review.summary);
+          }
         }
       } catch (err) {
         console.error(`[pr-review] Failed to merge PR #${prNumber}:`, err);
@@ -295,4 +302,100 @@ async function invokeAgentToFix(
   );
 
   return committed;
+}
+
+/**
+ * Auto-invoke PM after a PR is merged to decide the next step.
+ * Runs in background — doesn't block the review cycle.
+ */
+function autoInvokePM(
+  projectId: string,
+  sessionId: string,
+  repoFullName: string,
+  prNumber: number,
+  originalAgentId?: string,
+  reviewSummary?: string
+): void {
+  (async () => {
+    try {
+      console.log(`[pr-review] Auto-invoking PM for next step after PR #${prNumber} merge`);
+
+      // Load PM system prompt
+      let systemPrompt: string;
+      try {
+        const agentDir = path.join(process.cwd(), '..', '..', 'agents', 'pm');
+        systemPrompt = fs.readFileSync(path.join(agentDir, 'CLAUDE.md'), 'utf-8');
+      } catch {
+        systemPrompt = 'You are the Project Manager. Decide what agent should work next.';
+      }
+
+      // Load PM's tools
+      const toolRegistry = getToolRegistry();
+      let pmTools: string[] = [];
+      try {
+        const agentDir = path.join(process.cwd(), '..', '..', 'agents', 'pm');
+        const config = JSON.parse(fs.readFileSync(path.join(agentDir, 'config.json'), 'utf-8'));
+        pmTools = config.tools || [];
+      } catch { /* use defaults */ }
+
+      // Load project facts from session
+      let projectFacts = '';
+      try {
+        const { getFirestoreStore } = await import('./firestore-store');
+        const store = getFirestoreStore();
+        const session = await store.getSession(sessionId);
+        projectFacts = (session as any)?.projectFacts || '';
+      } catch { /* no facts */ }
+
+      const prompt = `A team member just completed their work and it has been merged:
+
+**Agent**: ${originalAgentId || 'unknown'}
+**PR #${prNumber}** merged into main in ${repoFullName}
+**Review summary**: ${reviewSummary || 'Approved'}
+
+${projectFacts ? `## Project Facts\n${projectFacts}\n\n` : ''}
+
+Based on the project plan and what has been delivered so far, what should happen next?
+Use \`request_handoff\` to assign the next specialist, or let the user know if more input is needed.
+Keep your response brief — 2-3 sentences max, then the handoff.`;
+
+      const tools = toolRegistry.getDefinitions(pmTools);
+      const result = await runAgent({
+        agentId: 'pm',
+        model: 'claude-sonnet-4-20250514',
+        systemPrompt,
+        messages: [{ role: 'user', content: prompt }],
+        tools,
+        toolExecutor: toolRegistry.createExecutor(),
+        maxTokens: 4000,
+        maxIterations: 3,
+        projectId,
+        repoFullName,
+      });
+
+      // Save PM's response as a chat message so it appears in the UI
+      if (result.output) {
+        const { getFirestoreStore } = await import('./firestore-store');
+        const store = getFirestoreStore();
+        await store.saveChatMessage({
+          sessionId,
+          role: 'agent',
+          agentId: 'pm',
+          content: result.output,
+          isQuestion: false,
+        });
+        console.log(`[pr-review] PM response saved: ${result.output.substring(0, 100)}...`);
+      }
+
+      // Check if PM requested a handoff
+      const handoffCall = result.toolCallsLog.find(
+        (tc) => tc.toolName === 'request_handoff' && !tc.isError
+      );
+      if (handoffCall) {
+        console.log(`[pr-review] PM requested handoff: ${JSON.stringify(handoffCall.input)}`);
+      }
+    } catch (err) {
+      console.error('[pr-review] Failed to auto-invoke PM:', err);
+    }
+  })();
 }

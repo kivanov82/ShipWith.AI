@@ -206,7 +206,7 @@ export function registerGitHubTools(registry: ToolRegistry): void {
 
         // Auto-trigger code review cycle in background (review → fix → merge → notify PM)
         import('../pr-reviewer').then(({ reviewPullRequest }) => {
-          reviewPullRequest(repo, pr.data.number, context.agentId, context.projectId).then((result) => {
+          reviewPullRequest(repo, pr.data.number, context.agentId, context.projectId, context.sessionId).then((result) => {
             console.log(`[auto-review] PR #${pr.data.number}: ${result.approved ? 'APPROVED' : 'CHANGES_REQUESTED'}, merged: ${result.merged}, cycles: ${result.cycles}`);
           }).catch((err) =>
             console.error(`[auto-review] Failed to review PR #${pr.data.number}:`, err)

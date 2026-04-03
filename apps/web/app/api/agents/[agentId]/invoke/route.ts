@@ -19,7 +19,7 @@ export async function POST(
     const { prompt, projectId, context } = body;
     // Only keep last 4 messages (2 exchanges) for conversational continuity.
     // Everything else is in the context system (project facts + agent summaries).
-    const rawHistory = body.history as Array<{ role: string; content: string }> | undefined;
+    const rawHistory = body.history as HistoryMessage[] | undefined;
     const history = rawHistory?.slice(-4);
 
     console.log(`[invoke] Agent: ${agentId}, ProjectId: ${projectId || 'NONE'}, History: ${history?.length || 0}/${rawHistory?.length || 0} msgs`);
