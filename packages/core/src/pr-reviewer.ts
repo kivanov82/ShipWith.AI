@@ -14,7 +14,8 @@
 import { getOctokit, mergePullRequest } from './github-repo';
 import { runAgent } from './agent-runner';
 import { getToolRegistry } from './tools';
-import { events } from './events';
+// Note: don't use SQLite EventBus here — it crashes in Next.js server.
+// Use Firestore for notifications instead.
 import type { AgentRunConfig, AgentId } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -75,21 +76,23 @@ export async function reviewPullRequest(
         lastReviewResult.merged = mergeResult.merged;
         console.log(`[pr-review] PR #${prNumber} merged: ${mergeResult.sha}`);
 
-        // Step 3: Notify PM via event
+        // Step 3: Log completion (Firestore notification for PM)
         if (projectId) {
-          events.taskCompleted(
-            'code-reviewer' as AgentId,
-            projectId,
-            `pr-${prNumber}`,
-            {
-              type: 'pr-merged',
-              prNumber,
-              repo: repoFullName,
-              mergedBy: 'code-reviewer',
-              originalAgent: originalAgentId,
-              summary: review.summary,
-            } as any
-          );
+          try {
+            const { getFirestoreStore } = await import('./firestore-store');
+            const store = getFirestoreStore();
+            // Save a completion event the PM can read
+            await store.saveChatMessage({
+              sessionId: projectId,
+              role: 'system',
+              agentId: 'code-reviewer',
+              content: `PR #${prNumber} has been reviewed and merged into main.\nRepository: ${repoFullName}\nOriginal author: ${originalAgentId || 'unknown'}\nSummary: ${review.summary}`,
+              isQuestion: false,
+            });
+          } catch (notifyErr) {
+            console.error(`[pr-review] Failed to save completion notification:`, notifyErr);
+          }
+          console.log(`[pr-review] PR #${prNumber} merged and notification saved for project ${projectId}`);
         }
       } catch (err) {
         console.error(`[pr-review] Failed to merge PR #${prNumber}:`, err);
