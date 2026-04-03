@@ -17,11 +17,12 @@ export async function POST(
     const { agentId } = params;
     const body = await request.json();
     const { prompt, projectId, context } = body;
-    // Truncate history to last 20 messages to prevent context overflow
+    // Only keep last 4 messages (2 exchanges) for conversational continuity.
+    // Everything else is in the context system (project facts + agent summaries).
     const rawHistory = body.history as Array<{ role: string; content: string }> | undefined;
-    const history = rawHistory?.slice(-20);
+    const history = rawHistory?.slice(-4);
 
-    console.log(`[invoke] Agent: ${agentId}, ProjectId: ${projectId || 'NONE'}, History: ${history?.length || 0} msgs`);
+    console.log(`[invoke] Agent: ${agentId}, ProjectId: ${projectId || 'NONE'}, History: ${history?.length || 0}/${rawHistory?.length || 0} msgs`);
 
     // Check if streaming is requested
     const url = new URL(request.url);
