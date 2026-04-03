@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, Loader2, MessageCircle, ArrowRight } from 'lucide-react';
 import { Agent, useShipWithAIStore } from '@/lib/store';
 
 interface AgentCardProps {
@@ -11,16 +11,33 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
-  const { deliverables } = useShipWithAIStore();
+  const { deliverables, activeSession, chatMessages } = useShipWithAIStore();
   const isActive = agent.status !== 'idle';
   const hasDelivered = deliverables.some(d => d.producedBy === agent.id);
+  const wasChatted = activeSession?.involvedAgents.includes(agent.id) ?? false;
+  const hasMessages = chatMessages.some(m => m.agentId === agent.id);
+
+  // Determine the idle status text and style
+  let idleText = 'Idle';
+  let idleStyle = 'bg-zinc-800/60 text-zinc-500';
+  let IdleIcon: typeof CheckCircle | null = null;
+
+  if (hasDelivered) {
+    idleText = 'Delivered';
+    idleStyle = 'bg-emerald-500/15 text-emerald-400';
+    IdleIcon = CheckCircle;
+  } else if (wasChatted && hasMessages) {
+    idleText = 'Consulted';
+    idleStyle = 'bg-violet-500/15 text-violet-400';
+    IdleIcon = MessageCircle;
+  }
 
   const statusConfig = {
-    idle: { color: 'bg-zinc-600', text: hasDelivered ? 'Done' : 'Idle', icon: hasDelivered ? CheckCircle : null },
-    thinking: { color: 'bg-amber-500', text: 'Thinking...', icon: Loader2 },
-    working: { color: 'bg-emerald-500', text: 'Working...', icon: Loader2 },
-    waiting: { color: 'bg-cyan-500', text: 'Waiting', icon: Clock },
-    error: { color: 'bg-red-500', text: 'Error', icon: null },
+    idle: { color: 'bg-zinc-600', text: idleText, icon: IdleIcon, style: idleStyle },
+    thinking: { color: 'bg-amber-500', text: 'Thinking...', icon: Loader2, style: 'bg-amber-500/15 text-amber-400' },
+    working: { color: 'bg-emerald-500', text: 'Working...', icon: Loader2, style: 'bg-emerald-500/15 text-emerald-400' },
+    waiting: { color: 'bg-cyan-500', text: 'Ready for input', icon: ArrowRight, style: 'bg-cyan-500/15 text-cyan-400' },
+    error: { color: 'bg-red-500', text: 'Error', icon: null, style: 'bg-red-500/15 text-red-400' },
   }[agent.status];
 
   return (
@@ -67,6 +84,15 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
           }}
           animate={{ opacity: [0.3, 0.8, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      {/* Waiting glow — soft cyan pulse */}
+      {agent.status === 'waiting' && !isSelected && (
+        <motion.div
+          className="absolute -inset-[2px] rounded-xl pointer-events-none z-0"
+          style={{ boxShadow: `0 0 16px 4px rgba(34, 211, 238, 0.3)` }}
+          animate={{ opacity: [0.2, 0.6, 0.2] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
@@ -121,12 +147,7 @@ export function AgentCard({ agent, isSelected, onClick }: AgentCardProps) {
         <div className="flex items-center justify-between">
           <div className={`
             flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium
-            ${agent.status === 'idle' && hasDelivered ? 'bg-emerald-500/15 text-emerald-400' : ''}
-            ${agent.status === 'waiting' ? 'bg-cyan-500/15 text-cyan-400' : ''}
-            ${agent.status === 'thinking' ? 'bg-amber-500/15 text-amber-400' : ''}
-            ${agent.status === 'working' ? 'bg-emerald-500/15 text-emerald-400' : ''}
-            ${agent.status === 'idle' && !hasDelivered ? 'bg-zinc-800/60 text-zinc-500' : ''}
-            ${agent.status === 'error' ? 'bg-red-500/15 text-red-400' : ''}
+            ${statusConfig.style}
           `}>
             {statusConfig.icon && (
               <statusConfig.icon className={`w-3 h-3 ${(agent.status === 'thinking' || agent.status === 'working') ? 'animate-spin' : ''}`} />

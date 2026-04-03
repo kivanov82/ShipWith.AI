@@ -277,6 +277,8 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
           if (event.toolName === 'request_handoff' && event.input?.targetAgent) {
             const targetId = event.input.targetAgent as string;
             setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: targetId }));
+            // Mark the target agent as waiting for user input
+            updateAgentStatus(targetId, 'waiting', 'Handoff pending');
           }
           const friendlyNames: Record<string, string> = {
             github_write_files: 'Committing to repository',
@@ -346,6 +348,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
             const suggested = detectSuggestedAgent(response.output, activeSession.involvedAgents);
             if (suggested && suggested !== agent.id) {
               setSuggestedHandoffs((prev) => ({ ...prev, [agent.id]: suggested }));
+              updateAgentStatus(suggested, 'waiting', 'Handoff pending');
             }
           }
         },
