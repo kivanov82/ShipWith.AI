@@ -77,6 +77,7 @@ export async function POST(
         maxTokens: (config.maxTokens as number) || 16000,
         maxIterations: (config.maxIterations as number) || 10,
         projectId,
+        sessionId,
         repoFullName,
         activeBranch,
         onBranchCreated: sessionId ? async (branch: string) => {

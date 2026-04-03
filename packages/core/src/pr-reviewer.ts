@@ -62,9 +62,27 @@ export async function reviewPullRequest(
     summary: '',
   };
 
+  // Helper to save status messages visible in the UI
+  const saveStatus = async (message: string) => {
+    if (!sessionId) return;
+    try {
+      const { getFirestoreStore } = await import('./firestore-store');
+      const store = getFirestoreStore();
+      await store.saveChatMessage({
+        sessionId,
+        role: 'system',
+        agentId: 'code-reviewer',
+        content: message,
+        isQuestion: false,
+      });
+    } catch { /* non-fatal */ }
+  };
+
   while (cycle < MAX_REVIEW_CYCLES) {
     cycle++;
     console.log(`[pr-review] Cycle ${cycle}/${MAX_REVIEW_CYCLES} for PR #${prNumber} in ${repoFullName}`);
+
+    await saveStatus(`🔍 Reviewing PR #${prNumber}...`);
 
     // Step 1: Run code review
     const review = await runCodeReview(repoFullName, prNumber);
@@ -73,6 +91,7 @@ export async function reviewPullRequest(
     if (review.approved) {
       // Step 2a: Approved → merge
       console.log(`[pr-review] PR #${prNumber} approved. Merging...`);
+      await saveStatus(`✅ PR #${prNumber} approved. Merging into main...`);
       try {
         const mergeResult = await mergePullRequest(repoFullName, prNumber, 'squash');
         lastReviewResult.merged = mergeResult.merged;
@@ -116,6 +135,8 @@ export async function reviewPullRequest(
     }
 
     console.log(`[pr-review] Changes requested on PR #${prNumber}. Re-invoking ${originalAgentId} to fix...`);
+    const findingsSummary = review.findings.map(f => `${f.severity === 'important' ? '🔴' : '🟡'} ${f.title}`).join(', ');
+    await saveStatus(`⚠️ Changes requested on PR #${prNumber}: ${findingsSummary}. Asking ${originalAgentId} to fix...`);
 
     // Build fix prompt from review findings
     const fixPrompt = buildFixPrompt(review, prNumber);
