@@ -139,8 +139,8 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
 
   // Per-agent streaming state from store
   const currentStream = activeAgent ? agentStreams[activeAgent.id] : undefined;
-  const streamingOutput = currentStream?.output || '';
-  const activeToolCalls = currentStream?.toolCalls || [];
+  const streamEvents = currentStream?.events || [];
+  const hasStreamContent = streamEvents.length > 0;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pendingAgentRef = useRef<string | null>(null);
 
@@ -151,7 +151,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [allMessages, streamingOutput]);
+  }, [allMessages, streamEvents]);
 
   // When user switches away from an agent, summarize that agent's conversation
   useEffect(() => {
@@ -448,7 +448,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5 min-h-[160px] max-h-[55vh]">
-          {allMessages.length === 0 && !streamingOutput ? (
+          {allMessages.length === 0 && !hasStreamContent ? (
             <div className="text-center py-8">
               <MessageSquare className="w-7 h-7 mx-auto mb-3 text-zinc-700" />
               <p className="text-sm text-zinc-500">
@@ -497,7 +497,7 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
               })}
 
               {/* Streaming output */}
-              {(streamingOutput || activeToolCalls.length > 0) && activeAgent && currentStream?.isActive && (
+              {hasStreamContent && activeAgent && currentStream?.isActive && (
                 <div className="flex justify-start gap-2.5">
                   <div
                     className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 mt-1"
@@ -509,16 +509,24 @@ export function AgentChatPanel({ activeAgent, autoStartAgent, onSwitchAgent }: A
                     <p className="text-[11px] font-medium mb-1.5 opacity-70" style={{ color: activeAgent.color }}>
                       {activeAgent.name}
                     </p>
-                    {streamingOutput && (
-                      <div className="text-[13px] leading-[1.7]">{renderMarkdown(streamingOutput)}</div>
-                    )}
-                    {activeToolCalls.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {activeToolCalls.map((tc, i) => (
-                          <div key={i} className="text-[11px] font-mono text-zinc-500">{tc}</div>
-                        ))}
-                      </div>
-                    )}
+                    {/* Interleaved text and tool events */}
+                    <div className="space-y-2">
+                      {streamEvents.map((ev, i) => (
+                        ev.type === 'text' ? (
+                          <div key={i} className="text-[13px] leading-[1.7]">{renderMarkdown(ev.content)}</div>
+                        ) : (
+                          <div key={i} className={`flex items-center gap-1.5 text-[11px] font-mono py-0.5 px-2 rounded ${
+                            ev.status === 'calling' ? 'bg-amber-500/10 text-amber-400' :
+                            ev.status === 'error' ? 'bg-red-500/10 text-red-400' :
+                            'bg-emerald-500/10 text-emerald-400'
+                          }`}>
+                            {ev.status === 'calling' ? '⚡' : ev.status === 'error' ? '✗' : '✓'}
+                            <span>{ev.label}</span>
+                            {ev.status === 'calling' && <Loader2 className="w-3 h-3 animate-spin ml-auto" />}
+                          </div>
+                        )
+                      ))}
+                    </div>
                     <div className="flex items-center gap-1.5 mt-2 text-zinc-500">
                       <Loader2 className="w-3 h-3 animate-spin" />
                       <span className="text-[11px]">Working...</span>

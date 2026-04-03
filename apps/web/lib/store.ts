@@ -202,7 +202,8 @@ interface ShipWithAIState {
   resetProjectStats: () => void;
 
   // Per-agent streaming state (persists across agent switches)
-  agentStreams: Record<string, { output: string; toolCalls: string[]; isActive: boolean }>;
+  // Events are an ordered list: { type: 'text', content } or { type: 'tool', label, status }
+  agentStreams: Record<string, { events: Array<{ type: 'text'; content: string } | { type: 'tool'; label: string; status: 'calling' | 'done' | 'error' }>; isActive: boolean }>;
   updateAgentStream: (agentId: string, chunk: string) => void;
   addAgentStreamToolCall: (agentId: string, label: string) => void;
   updateAgentStreamToolResult: (agentId: string, isError: boolean) => void;
@@ -415,29 +416,40 @@ export const useShipWithAIStore = create<ShipWithAIState>((set, get) => ({
   agentStreams: {},
   updateAgentStream: (agentId, chunk) =>
     set((state) => {
-      const current = state.agentStreams[agentId] || { output: '', toolCalls: [], isActive: true };
-      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, output: current.output + chunk } } };
+      const current = state.agentStreams[agentId] || { events: [], isActive: true };
+      const events = [...current.events];
+      // Append to last text event if exists, otherwise create new one
+      const last = events[events.length - 1];
+      if (last && last.type === 'text') {
+        events[events.length - 1] = { type: 'text', content: last.content + chunk };
+      } else {
+        events.push({ type: 'text', content: chunk });
+      }
+      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, events } } };
     }),
   addAgentStreamToolCall: (agentId, label) =>
     set((state) => {
-      const current = state.agentStreams[agentId] || { output: '', toolCalls: [], isActive: true };
-      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, toolCalls: [...current.toolCalls, label] } } };
+      const current = state.agentStreams[agentId] || { events: [], isActive: true };
+      return { agentStreams: { ...state.agentStreams, [agentId]: { events: [...current.events, { type: 'tool', label, status: 'calling' as const }], isActive: true } } };
     }),
   updateAgentStreamToolResult: (agentId, isError) =>
     set((state) => {
       const current = state.agentStreams[agentId];
       if (!current) return state;
-      const updated = [...current.toolCalls];
-      const idx = updated.findLastIndex((t) => t.startsWith('⚡'));
-      if (idx >= 0) {
-        const label = updated[idx].replace('⚡ ', '');
-        updated[idx] = isError ? `✗ ${label}` : `✓ ${label}`;
+      const events = [...current.events];
+      // Find the last 'calling' tool event and update it
+      for (let i = events.length - 1; i >= 0; i--) {
+        const ev = events[i];
+        if (ev.type === 'tool' && ev.status === 'calling') {
+          events[i] = { ...ev, status: isError ? 'error' as const : 'done' as const };
+          break;
+        }
       }
-      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, toolCalls: updated } } };
+      return { agentStreams: { ...state.agentStreams, [agentId]: { ...current, events } } };
     }),
   startAgentStream: (agentId) =>
     set((state) => ({
-      agentStreams: { ...state.agentStreams, [agentId]: { output: '', toolCalls: [], isActive: true } },
+      agentStreams: { ...state.agentStreams, [agentId]: { events: [], isActive: true } },
     })),
   endAgentStream: (agentId) =>
     set((state) => {
