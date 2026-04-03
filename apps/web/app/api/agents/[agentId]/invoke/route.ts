@@ -16,9 +16,12 @@ export async function POST(
   try {
     const { agentId } = params;
     const body = await request.json();
-    const { prompt, projectId, context, history } = body;
+    const { prompt, projectId, context } = body;
+    // Truncate history to last 20 messages to prevent context overflow
+    const rawHistory = body.history as Array<{ role: string; content: string }> | undefined;
+    const history = rawHistory?.slice(-20);
 
-    console.log(`[invoke] Agent: ${agentId}, ProjectId: ${projectId || 'NONE'}`);
+    console.log(`[invoke] Agent: ${agentId}, ProjectId: ${projectId || 'NONE'}, History: ${history?.length || 0} msgs`);
 
     // Check if streaming is requested
     const url = new URL(request.url);
@@ -310,6 +313,13 @@ function invokeViaAgentRunnerStreaming(runConfig: AgentRunConfig): Response {
         };
 
         const result = await runAgentStreaming(runConfig, callbacks);
+
+        // If agent returned an error message (e.g., API error), send it as text
+        if (!result.success && result.output) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ text: result.output })}\n\n`)
+          );
+        }
 
         // Send final result summary
         controller.enqueue(
