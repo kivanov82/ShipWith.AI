@@ -62,6 +62,18 @@ export function getOctokit(): Octokit {
 }
 
 /**
+ * Get an Octokit instance with write access.
+ * Prefers PAT (works reliably on personal account repos), falls back to App token.
+ */
+export async function getWriteOctokit(): Promise<Octokit> {
+  const pat = process.env.GITHUB_PAT;
+  if (pat) {
+    return new Octokit({ auth: pat });
+  }
+  return getOctokit();
+}
+
+/**
  * Create a new repo for a project under the configured owner account.
  * Returns the repo info including URL and clone URL.
  */
@@ -130,7 +142,7 @@ export async function commitFiles(
   authorName?: string,
   branch?: string
 ): Promise<CommitResult> {
-  const octokit = getOctokit();
+  const octokit = await getWriteOctokit();
   const [owner, repo] = repoFullName.split('/');
   const targetBranch = branch || 'main';
 
@@ -323,7 +335,7 @@ export async function mergePullRequest(
   prNumber: number,
   mergeMethod: 'merge' | 'squash' | 'rebase' = 'squash'
 ): Promise<{ merged: boolean; sha: string; message: string }> {
-  const octokit = getOctokit();
+  const octokit = await getWriteOctokit();
   const [owner, repo] = repoFullName.split('/');
 
   const { data } = await octokit.pulls.merge({
